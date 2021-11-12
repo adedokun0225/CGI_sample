@@ -1,0 +1,8 @@
+dist/
+distMultipleFiles/
+build/
+models/
+Blurr.zip
+__pychache__/
+.vscode/
+TestNotebooks/
