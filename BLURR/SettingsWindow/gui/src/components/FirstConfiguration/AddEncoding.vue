@@ -34,70 +34,69 @@
 </template>
 
 <script>
-import eelMixin from "../../lib/eelMixin.vue";
+  import eelMixin from "../../lib/eelMixin.vue";
 
-export default {
-  props: {
-    prev: Function,
-    next: Function,
-  },
-  mixins: [eelMixin],
-  data() {
-    return {
-      frameSrc: "",
-      active: true,
-      isLoading: false,
-      selectName: true,
-      nameState: null,
-      nameError: "",
-      nameToAdd: "",
-      addingError: false,
-      addingErrorMsg: "",
-    };
-  },
-  methods: {
-    async grabFrame() {
-      let src = await this.getFrame();
-      this.frameSrc = src.substring(2, src.length - 1);
-      if (!this.active) return;
+  export default {
+    props: {
+      prev: Function,
+      next: Function,
+    },
+    mixins: [eelMixin],
+    data() {
+      return {
+        frameSrc: "",
+        active: true,
+        isLoading: false,
+        selectName: true,
+        nameState: null,
+        nameError: "",
+        nameToAdd: "",
+        addingError: false,
+        addingErrorMsg: "",
+      };
+    },
+    methods: {
+      async grabFrame() {
+        let src = await this.getFrame();
+        this.frameSrc = src.substring(2, src.length - 1);
+        if (!this.active) return;
+        this.grabFrame();
+      },
+      goBack() {
+        this.active = false;
+        this.prev();
+      },
+      async proceedToFace() {
+        this.isLoading = true;
+        let valid = await this.checkName(this.nameToAdd.trim());
+        this.isLoading = false;
+        if (valid) {
+          this.selectName = false;
+          this.grabFrame();
+        } else {
+          this.nameState = false;
+          this.nameError =
+            this.nameToAdd.trim() == ""
+              ? "Name cannot be empty!"
+              : "Member already exists!";
+        }
+      },
+      async addEncoding() {
+        this.isLoading = true;
+        let res = JSON.parse(await this.addFaceEncoding(this.nameToAdd));
+        this.isLoading = false;
+        if (res.succesful) {
+          this.next();
+        } else {
+          this.addingError = true;
+          this.addingErrorMsg = res.error;
+        }
+      },
+    },
+    created() {
       this.grabFrame();
     },
-    goBack() {
-      this.active = false;
-      this.prev();
-    },
-    async proceedToFace() {
-      this.isLoading = true;
-      let valid = await this.checkName(this.nameToAdd.trim());
-      this.isLoading = false;
-      if (valid) {
-        this.selectName = false;
-        this.grabFrame();
-      } else {
-        this.nameState = false;
-        this.nameError =
-          this.nameToAdd.trim() == ""
-            ? "Name cannot be empty!"
-            : "Member already exists!";
-      }
-    },
-    async addEncoding() {
-      this.isLoading = true;
-      let res = JSON.parse(await this.addFaceEncoding(this.nameToAdd));
-      this.isLoading = false;
-      if (res.succesful) {
-        this.encodingAdded();
-        this.next();
-      } else {
-        this.addingError = true;
-        this.addingErrorMsg = res.error;
-      }
-    },
-  },
-  created() {
-    this.grabFrame();
-  },
-};
+  };
 </script>
 
 <style></style>
