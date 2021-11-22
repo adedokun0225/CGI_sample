@@ -3,6 +3,6 @@ distMultipleFiles/
 build/
 models/
 Blurr.zip
-__pycache__/
+**/__pycache__/
 .vscode/
 TestNotebooks/
