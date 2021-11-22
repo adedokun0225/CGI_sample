@@ -30,9 +30,7 @@
     </div>
 
     <b-modal v-model="showAcceptModal">
-      <div slot="modal-title">
-        PIN input needed
-      </div>
+      <div slot="modal-title">PIN input needed</div>
       <h3 v-show="invalidPin">Invalid PIN code!</h3>
 
       <div>
@@ -58,97 +56,95 @@
 </template>
 
 <script>
-import eelMixin from "../../lib/eelMixin.vue";
-export default {
-  mixins: [eelMixin],
-  data() {
-    return {
-      invalidPin: false,
-      enableTracking: false,
-      faceRecognition: false,
-      settings: {},
-      pinCode: "",
-      showAcceptModal: false,
-      modalLoading: false,
-    };
-  },
-  methods: {
-    formatPIN(pin) {
-      this.pwdMatch = null;
-      this.validOld = null;
-      this.pwdShort = null;
-      return String(pin)
-        .replace(/\D/g, "")
-        .substring(0, 4);
-    },
-    startTrack() {
-      this.startTracking();
-    },
-    stopTrack() {
-      this.stopTracking();
-    },
-    setFromSettings() {
-      this.enableTracking = this.settings["tracking"];
-      this.faceRecognition = this.settings["faceRecognition"];
-    },
-    async saveChanges() {
-      let updated = {
-        tracking: this.enableTracking,
-        faceRecognition: this.faceRecognition,
-        faceEncodings: this.settings.faceEncodings,
+  import eelMixin from "../../lib/eelMixin.vue";
+  export default {
+    mixins: [eelMixin],
+    data() {
+      return {
+        invalidPin: false,
+        enableTracking: false,
+        faceRecognition: false,
+        settings: {},
+        pinCode: "",
+        showAcceptModal: false,
+        modalLoading: false,
       };
-      this.modalLoading = true;
-      let res = await this.setGeneralSettings(this.pinCode, updated);
-      this.modalLoading = false;
-      if (res) {
-        this.showAcceptModal = false;
-        this.settings = updated;
-        this.pinCode = "";
-        this.setFromSettings();
-      } else {
-        this.invalidPin = true;
-      }
     },
-  },
-  async created() {
-    this.settings = JSON.parse(await this.getGeneralSettings());
-    this.setFromSettings();
-  },
-  computed: {
-    wasChanged() {
-      return (
-        this.settings["tracking"] != this.enableTracking ||
-        this.settings["faceRecognition"] != this.faceRecognition
-      );
+    methods: {
+      formatPIN(pin) {
+        this.pwdMatch = null;
+        this.validOld = null;
+        this.pwdShort = null;
+        return String(pin).replace(/\D/g, "").substring(0, 4);
+      },
+      startTrack() {
+        this.startTracking();
+      },
+      stopTrack() {
+        this.stopTracking();
+      },
+      setFromSettings() {
+        this.enableTracking = this.settings["tracking"];
+        this.faceRecognition = this.settings["faceRecognition"];
+      },
+      async saveChanges() {
+        let updated = {
+          tracking: this.enableTracking,
+          faceRecognition: this.faceRecognition,
+          faceEncodings: this.settings.faceEncodings,
+        };
+        this.modalLoading = true;
+        let res = await this.setGeneralSettings(this.pinCode, updated);
+        this.modalLoading = false;
+        if (res) {
+          this.showAcceptModal = false;
+          this.settings = updated;
+          this.pinCode = "";
+          this.setFromSettings();
+        } else {
+          this.invalidPin = true;
+        }
+      },
     },
-    facesDisabled() {
-      return !this.settings["faceEncodings"];
+    async created() {
+      this.settings = await this.getGeneralSettings();
+      this.setFromSettings();
     },
-  },
-};
+    computed: {
+      wasChanged() {
+        return (
+          this.settings["tracking"] != this.enableTracking ||
+          this.settings["faceRecognition"] != this.faceRecognition
+        );
+      },
+      facesDisabled() {
+        return !this.settings["faceEncodings"];
+      },
+    },
+  };
 </script>
 
 <style scoped>
-#generalSettingsDiv {
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  text-align: left;
-}
+  #generalSettingsDiv {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    text-align: left;
+  }
 
-#bt-div {
-  display: flex;
-  flex-direction: row;
-  margin-top: 20px;
-}
+  #bt-div {
+    display: flex;
+    flex-direction: row;
+    margin-top: 20px;
+  }
 
-.settings-bt {
-  flex-grow: 1;
-}
+  .settings-bt {
+    flex-grow: 1;
+  }
 
-.settingsLabel {
-  font-family: Helvetica;
-  font-weight: 600;
-  font-size: 15px;
-}
+  .settingsLabel {
+    font-family: Helvetica;
+    font-weight: 600;
+    font-size: 15px;
+  }
 </style>

@@ -9,72 +9,72 @@
 </template>
 
 <script>
-import WelcomeScreen from "./WelcomeScreen.vue";
-import PINSetup from "./PINSetup.vue";
-import EnableFace from "./EnableFace.vue";
-import AddEncoding from "./AddEncoding.vue";
-import StartTracking from "./StartTracking.vue";
-import eelMixin from "../../lib/eelMixin.vue";
+  import WelcomeScreen from "./WelcomeScreen.vue";
+  import PINSetup from "./PINSetup.vue";
+  import EnableFace from "./EnableFace.vue";
+  import AddEncoding from "./AddEncoding.vue";
+  import StartTracking from "./StartTracking.vue";
+  import eelMixin from "../../lib/eelMixin.vue";
 
-export default {
-  mixins: [eelMixin],
-  components: {
-    WelcomeScreen,
-    PINSetup,
-    EnableFace,
-    AddEncoding,
-    StartTracking,
-  },
-  props: {
-    configure: Function,
-  },
-  data() {
-    return {
-      state: 0,
-      pinCode: "",
-      useFaceRecognition: false,
-      faceModels: false,
-    };
-  },
-  methods: {
-    next() {
-      this.state++;
+  export default {
+    mixins: [eelMixin],
+    components: {
+      WelcomeScreen,
+      PINSetup,
+      EnableFace,
+      AddEncoding,
+      StartTracking,
     },
-    prev() {
-      this.state--;
+    props: {
+      configure: Function,
     },
-    setUpPin(pin) {
-      this.pinCode = pin;
-      this.state++;
-    },
-    useFace(useFace) {
-      this.useFaceRecognition = useFace;
-      if (useFace && !this.faceModels) {
-        this.state++;
-      } else {
-        this.state += 2;
-      }
-    },
-    start(tracking) {
-      let settings = {
-        tracking: tracking,
-        face_recognition: this.faceRecognition,
-        unlockPin: this.pinCode,
+    data() {
+      return {
+        state: 0,
+        pinCode: "",
+        useFaceRecognition: false,
+        faceModels: false,
       };
-      this.setUp(settings);
-      this.configure();
     },
-  },
-  async created() {
-    let settings = JSON.parse(await this.getGeneralSettings());
-    this.faceModels = settings["faceEncodings"];
-  },
-};
+    methods: {
+      next() {
+        this.state++;
+      },
+      prev() {
+        this.state--;
+      },
+      setUpPin(pin) {
+        this.pinCode = pin;
+        this.state++;
+      },
+      useFace(useFace) {
+        this.useFaceRecognition = useFace;
+        if (useFace && !this.faceModels) {
+          this.state++;
+        } else {
+          this.state += 2;
+        }
+      },
+      start(tracking) {
+        let settings = {
+          tracking: tracking,
+          face_recognition: this.faceRecognition,
+          unlockPin: this.pinCode,
+        };
+        this.setUp(settings);
+        this.configure();
+      },
+    },
+    async created() {
+      let settings = await this.getGeneralSettings();
+      this.faceModels = settings["faceEncodings"];
+    },
+  };
 </script>
 
 <style>
-#configure-container {
-  min-width: 100vw;
-  min-height: 100vh;
-}
+  #configure-container {
+    min-width: 100vw;
+    min-height: 100vh;
+  }
 </style>

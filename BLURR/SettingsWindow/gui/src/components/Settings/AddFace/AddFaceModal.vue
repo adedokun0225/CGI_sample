@@ -36,130 +36,130 @@
 </template>
 
 <script>
-import eelMixin from "../../../lib/eelMixin.vue";
-export default {
-  mixins: [eelMixin],
-  props: {
-    show: Boolean,
-    hideModal: Function,
-    name: String,
-  },
-  data() {
-    return {
-      frameSrc: "",
-      isOpen: true,
-      modalTitle: "Add face encoding",
-      showModal: false,
-      selectName: false,
-      addingError: false,
-      addingErrorMsg: "",
-      nameToAdd: "",
-      proceedButtonText: "",
-      nameError: "",
-      nameState: null,
-      isLoading: false,
-    };
-  },
-  methods: {
-    async grabFrame() {
-      let src = await this.getFrame();
-      this.frameSrc = src.substring(2, src.length - 1);
-      if (!this.showModal) return;
-      this.grabFrame();
+  import eelMixin from "../../../lib/eelMixin.vue";
+  export default {
+    mixins: [eelMixin],
+    props: {
+      show: Boolean,
+      hideModal: Function,
+      name: String,
     },
-    async addEncoding() {
-      this.isLoading = true;
-      let res = JSON.parse(await this.addFaceEncoding(this.nameToAdd));
-      this.isLoading = false;
-      if (res.succesful) {
-        this.encodingAdded();
-        this.hide();
-      } else {
-        this.addingError = true;
-        this.addingErrorMsg = res.error;
-      }
+    data() {
+      return {
+        frameSrc: "",
+        isOpen: true,
+        modalTitle: "Add face encoding",
+        showModal: false,
+        selectName: false,
+        addingError: false,
+        addingErrorMsg: "",
+        nameToAdd: "",
+        proceedButtonText: "",
+        nameError: "",
+        nameState: null,
+        isLoading: false,
+      };
     },
-    async proceedToFace() {
-      this.isLoading = true;
-      let valid = await this.checkName(this.nameToAdd.trim());
-      this.isLoading = false;
-      if (valid) {
-        this.selectName = false;
+    methods: {
+      async grabFrame() {
+        let src = await this.getFrame();
+        this.frameSrc = src.substring(2, src.length - 1);
+        if (!this.showModal) return;
         this.grabFrame();
-      } else {
-        this.nameState = false;
-        this.nameError =
-          this.nameToAdd.trim() == ""
-            ? "Name cannot be empty!"
-            : "Member already exists!";
-      }
+      },
+      async addEncoding() {
+        this.isLoading = true;
+        let res = await this.addFaceEncoding(this.nameToAdd);
+        this.isLoading = false;
+        if (res.succesful) {
+          this.encodingAdded();
+          this.hide();
+        } else {
+          this.addingError = true;
+          this.addingErrorMsg = res.error;
+        }
+      },
+      async proceedToFace() {
+        this.isLoading = true;
+        let valid = await this.checkName(this.nameToAdd.trim());
+        this.isLoading = false;
+        if (valid) {
+          this.selectName = false;
+          this.grabFrame();
+        } else {
+          this.nameState = false;
+          this.nameError =
+            this.nameToAdd.trim() == ""
+              ? "Name cannot be empty!"
+              : "Member already exists!";
+        }
+      },
+      openModal() {
+        this.isLoading = false;
+        this.showModal = true;
+        if (this.name && this.name.length > 0) {
+          //Adding an encoding for an existing member
+          console.log("Name is here! in modal");
+          this.nameToAdd = this.name;
+          this.selectName = false;
+          this.grabFrame();
+        } else {
+          this.nameToAdd = "";
+          this.selectName = true;
+        }
+      },
+      hide() {
+        this.showModal = false;
+      },
+      encodingAdded() {
+        this.$bvToast.toast("Succesfully added the encoding!", {
+          title: "Success",
+          variant: "success",
+          toaster: "b-toaster-top-center",
+          appendToast: true,
+        });
+      },
     },
-    openModal() {
-      this.isLoading = false;
-      this.showModal = true;
-      if (this.name && this.name.length > 0) {
-        //Adding an encoding for an existing member
-        console.log("Name is here! in modal");
-        this.nameToAdd = this.name;
-        this.selectName = false;
-        this.grabFrame();
-      } else {
-        this.nameToAdd = "";
-        this.selectName = true;
-      }
+    computed: {
+      nameTitle() {
+        if (!this.selectName) {
+          return " for " + this.nameToAdd;
+        }
+        return "";
+      },
     },
-    hide() {
-      this.showModal = false;
+    beforeDestroy() {
+      this.isOpen = false;
     },
-    encodingAdded() {
-      this.$bvToast.toast("Succesfully added the encoding!", {
-        title: "Success",
-        variant: "success",
-        toaster: "b-toaster-top-center",
-        appendToast: true,
-      });
+    watch: {
+      nameToAdd() {
+        this.nameState = null;
+      },
+      show() {
+        if (this.show) {
+          this.openModal();
+        } else {
+          if (!this.showModal) this.showModal = false;
+        }
+      },
+      showModal() {
+        if (!this.showModal && this.show) {
+          this.hideModal();
+        }
+      },
     },
-  },
-  computed: {
-    nameTitle() {
-      if (!this.selectName) {
-        return " for " + this.nameToAdd;
-      }
-      return "";
-    },
-  },
-  beforeDestroy() {
-    this.isOpen = false;
-  },
-  watch: {
-    nameToAdd() {
-      this.nameState = null;
-    },
-    show() {
-      if (this.show) {
-        this.openModal();
-      } else {
-        if (!this.showModal) this.showModal = false;
-      }
-    },
-    showModal() {
-      if (!this.showModal && this.show) {
-        this.hideModal();
-      }
-    },
-  },
-};
+  };
 </script>
 
 <style>
-#cameraDiv {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-}
+  #cameraDiv {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
 
-#modal-footer {
-  display: flex;
-  flex-direction: row;
-}
+  #modal-footer {
+    display: flex;
+    flex-direction: row;
+  }
 </style>

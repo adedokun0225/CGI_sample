@@ -56,119 +56,119 @@
 </template>
 
 <script>
-const SIGN_UP_SUCCESS =
-  "Succesfully submitted a request. You will receive an email with a password after the admistrator has accepted your registration.";
+  const SIGN_UP_SUCCESS =
+    "Succesfully submitted a request. You will receive an email with a password after the admistrator has accepted your registration.";
 
-import eelMixin from "../../lib/eelMixin.vue";
+  import eelMixin from "../../lib/eelMixin.vue";
 
-export default {
-  mixins: [eelMixin],
-  props: {
-    onLogin: Function,
-  },
-  data() {
-    return {
-      email: "",
-      isEmailValid: null,
-      password: "",
-      isPasswordValid: null,
-      hasAccount: true,
-    };
-  },
-  methods: {
-    toggleMethod() {
-      this.hasAccount = !this.hasAccount;
+  export default {
+    mixins: [eelMixin],
+    props: {
+      onLogin: Function,
     },
-    onChange(str) {
-      this.isEmailValid = null;
-      this.isPasswordValid = null;
-      return str.trim();
+    data() {
+      return {
+        email: "",
+        isEmailValid: null,
+        password: "",
+        isPasswordValid: null,
+        hasAccount: true,
+      };
     },
-    sign() {
-      if (this.hasAccount) this.signIn();
-      else this.register();
-    },
-    async signIn() {
-      let success = await this.logIn(this.email, this.password);
-      console.log("Tried to login, result=" + success);
-      if (success) {
-        this.onLogin();
-      } else {
-        this.isPasswordValid = false;
-      }
-    },
-    async register() {
-      let res = JSON.parse(await this.signUp(this.email));
+    methods: {
+      toggleMethod() {
+        this.hasAccount = !this.hasAccount;
+      },
+      onChange(str) {
+        this.isEmailValid = null;
+        this.isPasswordValid = null;
+        return str.trim();
+      },
+      sign() {
+        if (this.hasAccount) this.signIn();
+        else this.register();
+      },
+      async signIn() {
+        let success = await this.logIn(this.email, this.password);
+        console.log("Tried to login, result=" + success);
+        if (success) {
+          this.onLogin();
+        } else {
+          this.isPasswordValid = false;
+        }
+      },
+      async register() {
+        let res = await this.signUp(this.email);
 
-      if (res.successful) {
-        this.$bvToast.toast(SIGN_UP_SUCCESS, {
-          title: "Submitted your request",
-          variant: "success",
-          toaster: "b-toaster-top-center",
-          appendToast: true,
-        });
-        this.password = "";
-        this.toggleMethod();
-      } else {
-        this.$bvToast.toast(res.message, {
-          title: "Error",
-          variant: "warning",
-          toaster: "b-toaster-top-center",
-          appendToast: true,
-        });
-      }
+        if (res.successful) {
+          this.$bvToast.toast(SIGN_UP_SUCCESS, {
+            title: "Submitted your request",
+            variant: "success",
+            toaster: "b-toaster-top-center",
+            appendToast: true,
+          });
+          this.password = "";
+          this.toggleMethod();
+        } else {
+          this.$bvToast.toast(res.message, {
+            title: "Error",
+            variant: "warning",
+            toaster: "b-toaster-top-center",
+            appendToast: true,
+          });
+        }
+      },
     },
-  },
-  computed: {
-    toggleText() {
-      return this.hasAccount
-        ? "Create a new account"
-        : "I already have an account";
+    computed: {
+      toggleText() {
+        return this.hasAccount
+          ? "Create a new account"
+          : "I already have an account";
+      },
+      signText() {
+        return this.hasAccount ? "Sign In" : "Sign Up";
+      },
     },
-    signText() {
-      return this.hasAccount ? "Sign In" : "Sign Up";
+    async created() {
+      this.email = await this.getEmail();
     },
-  },
-  async created() {
-    this.email = await this.getEmail();
-  },
-};
+  };
 </script>
 
 <style scoped>
-#login-container {
-  min-width: 100vw;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-}
+  #login-container {
+    min-width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
 
-#blurr-logo {
-  height: 15px;
-}
+  #blurr-logo {
+    height: 15px;
+  }
 
-#logo-container {
-  padding: 20px 40px;
-  margin-bottom: -50px;
-  text-align: left;
-}
+  #logo-container {
+    padding: 20px 40px;
+    margin-bottom: -50px;
+    text-align: left;
+  }
 
-#middle-container {
-  margin: auto;
-  display: flex;
-  flex-direction: 1;
-  min-width: 40%;
-  flex-direction: column;
-}
+  #middle-container {
+    margin: auto;
+    display: flex;
+    flex-direction: 1;
+    min-width: 40%;
+    flex-direction: column;
+  }
 
-#buttons-container {
-  display: flex;
-  flex-direction: row;
-}
+  #buttons-container {
+    display: flex;
+    flex-direction: row;
+  }
 
-.bottom-button {
-  flex-grow: 1;
-  width: 50%;
-}
+  .bottom-button {
+    flex-grow: 1;
+    width: 50%;
+  }
 </style>

@@ -83,7 +83,7 @@
       },
       async addEncoding() {
         this.isLoading = true;
-        let res = JSON.parse(await this.addFaceEncoding(this.nameToAdd));
+        let res = await this.addFaceEncoding(this.nameToAdd);
         this.isLoading = false;
         if (res.succesful) {
           this.next();

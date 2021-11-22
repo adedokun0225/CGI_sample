@@ -1,53 +1,54 @@
 import ctypes
-import json
 from typing import Set
 from LocalData.Settings import Settings
 from LocalData.User import User
 
-#service to change settings from the settings window
+# service to change settings from the settings window
+
+
 class SettingsService():
 
     def __init__(self) -> None:
         self.pinTries = 0
 
-    #changes the pin code given the current one
+    # changes the pin code given the current one
     def changePinCode(self, oldPin, newPin):
         currentPin = Settings.get(Settings.UNLOCK_PIN)
-        #check if the correct old pin was passed
+        # check if the correct old pin was passed
         if currentPin != oldPin:
-            #if not save the unsuccesful try
+            # if not save the unsuccessful try
             self.pinTries += 1
-            
-            #on the third failed try -> lock station
-            if self.pinTries >=3:
+
+            # on the third failed try -> lock station
+            if self.pinTries >= 3:
                 self.lockStation()
             return False
 
-        #if the current pin code was current, save the new pin
+        # if the current pin code was current, save the new pin
         Settings.set(Settings.UNLOCK_PIN, newPin)
         self.pinTries = 0
         return True
 
-    #sets a new pin code and locks the station
+    # sets a new pin code and locks the station
     def resetPinCode(self, newPin):
         Settings.set(Settings.UNLOCK_PIN, newPin)
         self.lockStation()
 
-    #returns the info about the saved face encodings
+    # returns the info about the saved face encodings
     def getFacesInfo(self):
         encodings = Settings.get(Settings.ENCODED_FACES, default={})
         res = []
         for person in encodings:
-            res.append({"name":person, "count":len(encodings[person])})
-        
-        return json.dumps(res, indent=4)
+            res.append({"name": person, "count": len(encodings[person])})
 
+        return res
 
-    #tries to add a face encoding
+    # tries to add a face encoding
+
     def addFaceEncoding(self, encodings, name):
         res = {}
         name = str(name)
-        #exactly one encoding must be passed, otherwise no decision can be made which one to choose
+        # exactly one encoding must be passed, otherwise no decision can be made which one to choose
         if len(encodings) == 1:
             savedEncodings = Settings.get(Settings.ENCODED_FACES, default={})
             if name in savedEncodings:
@@ -55,75 +56,79 @@ class SettingsService():
             else:
                 savedEncodings[name] = [encodings[0].tolist()]
             Settings.set(Settings.ENCODED_FACES, savedEncodings)
-            res["succesful"] = True
-            return json.dumps(res, indent=4)
+            res["successful"] = True
+            return res
         else:
-            res["succesful"] = False
+            res["successful"] = False
             res["error"] = "Wrong count of detected faces"
-            return json.dumps(res, indent=4)
+            return res
 
-    #check whether a given member name is already taken
+    # check whether a given member name is already taken
     def checkName(self, name):
         savedEncodings = Settings.get(Settings.ENCODED_FACES, default={})
         return (not name in savedEncodings) and len(name) > 0
 
-    #deletes all encodings for a given member
+    # deletes all encodings for a given member
     def deletePerson(self, name):
         savedEncodings = Settings.get(Settings.ENCODED_FACES, default={})
         if name in savedEncodings:
             del savedEncodings[name]
             if len(savedEncodings) == 0:
                 Settings.set(Settings.FACE_RECOGNITION, False)
-        
+
         savedEncodings = Settings.set(Settings.ENCODED_FACES, savedEncodings)
 
-    #toggles the tracking status
+    # toggles the tracking status
     def setTracking(self, isTracking):
         Settings.set(Settings.TRACKING_ON, isTracking)
 
-    #lock the station and reset the current failed pin tries count
+    # lock the station and reset the current failed pin tries count
     def lockStation(self):
         self.pinTries = 0
         ctypes.windll.user32.LockWorkStation()
 
-    #changes the general settings given a correct pin code and a method to call if tracking status has been changed 
+    # changes the general settings given a correct pin code and a method to call if tracking status has been changed
     def setGeneralSettings(self, pinCode, settings, toggleMethod):
         sets = settings
         actualPin = Settings.get(Settings.UNLOCK_PIN)
         if pinCode != actualPin:
             return False
-        
+
         if Settings.TRACKING_ON in sets:
             Settings.set(Settings.TRACKING_ON, sets[Settings.TRACKING_ON])
             toggleMethod(sets[Settings.TRACKING_ON])
 
         if Settings.FACE_RECOGNITION in sets:
-            Settings.set(Settings.FACE_RECOGNITION, sets[Settings.FACE_RECOGNITION])
+            Settings.set(Settings.FACE_RECOGNITION,
+                         sets[Settings.FACE_RECOGNITION])
 
         return True
 
-    #returns the general settings
+    # returns the general settings
     def getGeneralSettings(self):
         ret = {}
-        ret[Settings.FACE_RECOGNITION] = Settings.get(Settings.FACE_RECOGNITION, default=False)
-        ret[Settings.TRACKING_ON] = Settings.get(Settings.TRACKING_ON, default=False)
+        ret[Settings.FACE_RECOGNITION] = Settings.get(
+            Settings.FACE_RECOGNITION, default=False)
+        ret[Settings.TRACKING_ON] = Settings.get(
+            Settings.TRACKING_ON, default=False)
         ret["faceEncodings"] = len(Settings.get(Settings.ENCODED_FACES)) > 0
-        return json.dumps(ret, indent=4)
+        return ret
 
-    #returns whether it is not the first start of the app
+    # returns whether it is not the first start of the app
     def wasSetUp(self):
         return Settings.isSetUp()
-    
-    #configure the app
+
+    # configure the app
     def setUp(self, settings, toggleMethod):
         print("Setting up")
         Settings.set(Settings.UNLOCK_PIN, settings[Settings.UNLOCK_PIN])
         Settings.set(Settings.WAS_SET_UP, True)
-        self.setGeneralSettings(settings[Settings.UNLOCK_PIN], settings, toggleMethod)
-    
+        self.setGeneralSettings(
+            settings[Settings.UNLOCK_PIN], settings, toggleMethod)
+
     def getEmail(self):
         return User.getEmail()
-        #return Settings.get(Settings.EMAIL, default="")
+        # return Settings.get(Settings.EMAIL, default="")
 
     def executeIfPin(self, pin, fn):
         currentPin = Settings.get(Settings.UNLOCK_PIN)
