@@ -1,15 +1,9 @@
-from Logging.ServerConnection import OK, ServerConnection, UNAUTHORIZED
-from LocalData.User import User
-import json
-
-from ServerConnection.Server import Server
 from LocalData.User import User
 
 
 class ConnectionService():
 
-    def __init__(self, serverConnection: ServerConnection, setTracking) -> None:
-        self.serverConnection = serverConnection
+    def __init__(self, setTracking) -> None:
         self.setTracking = setTracking
 
     def isUserLoggedIn(self):
