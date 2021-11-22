@@ -7,7 +7,10 @@ import cgi.blurr.loggingsserver.Repository.RoleRepository;
 import cgi.blurr.loggingsserver.Repository.UserRepository;
 import cgi.blurr.loggingsserver.Security.Services.UserDetailsImpl;
 import cgi.blurr.loggingsserver.Service.UserService;
+import cgi.blurr.loggingsserver.payload.AuthenticationController.SignupResponse;
+import cgi.blurr.loggingsserver.payload.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -70,5 +73,16 @@ public class UserServiceImpl implements UserService {
     public User getCurrentUser() {
         UserDetailsImpl details = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return userRepository.findByEmail(details.getEmail()).orElseThrow(() -> new RuntimeException("Error: User not found"));
+    }
+
+    @Override
+    public SignupResponse signUp(String email) {
+        if(existsByEmail(email)) {
+            return new SignupResponse(false, "User with this email already exists!");
+        }
+
+        addUser(email);
+        return new SignupResponse(true, "Succesfully registered!");
+
     }
 }

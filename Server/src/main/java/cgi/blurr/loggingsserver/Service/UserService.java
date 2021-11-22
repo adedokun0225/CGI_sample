@@ -3,6 +3,7 @@ package cgi.blurr.loggingsserver.Service;
 import cgi.blurr.loggingsserver.Model.Role;
 import cgi.blurr.loggingsserver.Model.RoleEnum;
 import cgi.blurr.loggingsserver.Model.User;
+import cgi.blurr.loggingsserver.payload.AuthenticationController.SignupResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -23,5 +24,7 @@ public interface UserService {
     boolean isBlurrEnabled();
 
     User getCurrentUser();
+
+    SignupResponse signUp(String email);
 
 }

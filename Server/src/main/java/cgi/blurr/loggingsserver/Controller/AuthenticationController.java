@@ -64,14 +64,7 @@ public class AuthenticationController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> register(@Valid @RequestBody SignupRequest request) {
-        if(userService.existsByEmail(request.getEmail())) {
-            return ResponseEntity.badRequest().body(new MessageResponse("User with this email already exists!"));
-        }
-
-        userService.addUser(request.getEmail());
-
-        //TODO: send email to me
-        return ResponseEntity.ok(new MessageResponse("Succesfully registered!"));
+        return ResponseEntity.ok(userService.signUp(request.getEmail()));
     }
 
 

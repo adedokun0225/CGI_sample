@@ -5,9 +5,10 @@ import json
 from ServerConnection.Server import Server
 from LocalData.User import User
 
+
 class ConnectionService():
-    
-    def __init__(self, serverConnection:ServerConnection, setTracking) -> None:
+
+    def __init__(self, serverConnection: ServerConnection, setTracking) -> None:
         self.serverConnection = serverConnection
         self.setTracking = setTracking
 
@@ -16,18 +17,20 @@ class ConnectionService():
 
     def logIn(self, email, password):
         #(code, _) = self.serverConnection.logIn(email=email, password=password)
-        #return not code == UNAUTHORIZED
+        # return not code == UNAUTHORIZED
         return User.signIn(email, password)
 
     def singUp(self, email):
-        (code, msg) = self.serverConnection.signUp(email)
+        response = User.signUp(email)
+        if response:
+            return response
+
         ret = {
-            "successful": code==OK,
-            "message": msg,
+            "successful": False,
+            "message": "Could not connect to Server!"
         }
-        return json.dumps(ret, indent=4)
+        return ret
 
     def logOut(self):
         self.serverConnection.logOut()
         self.setTracking(False)
-        

@@ -5,6 +5,7 @@ import keyring
 
 APP_NAME = "Blurr"
 
+
 class User():
 
     CREDENTIALS = "credentials"
@@ -39,44 +40,53 @@ class User():
         return User.authorize()
 
     @staticmethod
+    def signUp(email):
+        code, body = Server.signUp(email)
+        if code == Server.OK:
+            User.credentials.setEmail(email)
+        return body
+
+    @staticmethod
     def commit():
         User.storage.commit()
 
     @staticmethod
-    #tries to autorize the user, checking if blurr is enabled for this accoutn
+    # tries to autorize the user, checking if blurr is enabled for this accoutn
     def authorize():
         if User.credentials.getEmail() == None:
             return False
-        
+
         (code, body) = Server.isBlurrEnabled(User.credentials.getJwtToken())
         if code == Server.NO_CONNECTION:
             return User.credentials.isAuthorized()
 
         if code == Server.OK:
             return body["blurrEnabled"]
-        
+
         (code, body) = Server.refreshToken(User.credentials.getRefreshToken())
         if code == Server.NO_CONNECTION:
             return User.credentials.isAuthorized()
-        
+
         if code == Server.OK:
-            User.credentials.setJwtToken(str(body["type"]) + " " + str(body["jwtToken"]))
+            User.credentials.setJwtToken(
+                str(body["type"]) + " " + str(body["jwtToken"]))
             User.credentials.setRefreshToken(str(body["refreshToken"]))
             User.commit()
             return User.authorize()
-        
-        (code, jwtToken, refreshToken) = Server.signIn(User.credentials.getEmail(), User.getPassword())
+
+        (code, jwtToken, refreshToken) = Server.signIn(
+            User.credentials.getEmail(), User.getPassword())
         if code == Server.NO_CONNECTION:
             return User.credentials.isAuthorized()
-        
+
         if code == Server.OK:
             User.credentials.setJwtToken(jwtToken)
             User.credentials.setRefreshToken(refreshToken)
             User.commit()
             return User.authorize()
-        
+
         return False
-        
+
     @staticmethod
     def getPassword():
         return keyring.get_password(APP_NAME, User.credentials.getEmail())
@@ -92,11 +102,10 @@ class User():
     def setPassword(email, pwd):
         if email == None or len(email) == 0:
             return
-        keyring.set_password(APP_NAME, email, pwd) 
+        keyring.set_password(APP_NAME, email, pwd)
 
     @staticmethod
     def getJwtToken():
         if not User.authorize():
             return None
         return User.credentials.getJwtToken()
-        

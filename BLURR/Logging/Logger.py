@@ -1,8 +1,6 @@
 from os import stat
-from Logging.ServerConnection import ServerConnection
 from LocalData.Model.LogEntry import LogEntry
 from LocalData.LocalStorage import LocalStorage, Database
-from LocalData.Settings import Settings
 from LocalData.User import User
 from ServerConnection.Server import Server
 import logging
@@ -10,13 +8,12 @@ import sys
 import time
 from getmac import get_mac_address
 
-
 SERVER_URL = "http://localhost:8080"
 
 LOCAL_LOG_TABLE = "logs"
 LOCAL_LOGS_TO_UPLOAD_TABLE = "logsToUpload"
 
-KEY="RQAHytaSyNhTrxlggk6Q"
+KEY = "RQAHytaSyNhTrxlggk6Q"
 
 LOG_BLURR_ACTIVE = 1
 LOG_BLURR_INACTIVE = 2
@@ -39,10 +36,12 @@ LOG_MESSAGES = {
 
 BLURR_LOGGER_NAME = "blurrLogger"
 
-#entry point for the logging module, logs usage to file/server
+# entry point for the logging module, logs usage to file/server
+
+
 class Logger(object):
 
-    #initializes logging part
+    # initializes logging part
     @staticmethod
     def initialize():
         Logger.localStorage = LocalStorage.getConnection()
@@ -50,28 +49,22 @@ class Logger(object):
         Logger.localStorage.createMapIfNotExists(LOCAL_LOGS_TO_UPLOAD_TABLE)
         logger = logging.getLogger(BLURR_LOGGER_NAME)
         logger.setLevel(logging.DEBUG)
-        #prepare formatter and clear s
+
+        # prepare formatter and clear s
         formatter = logging.Formatter("%(asctime)s - %(message)s")
 
         logger.handlers.clear()
-        
-        #logging to console
+
+        # logging to console
         sh = logging.StreamHandler(sys.stdout)
         sh.setFormatter(formatter)
         logger.addHandler(sh)
 
-        #logging to file
-        #filePath = Settings.getDefaultLoggingPath()
-        #fh = logging.FileHandler(filename=filePath)
-        #fh.setFormatter(formatter)
-        #logger.addHandler(fh)
-        
-
     @staticmethod
-    #logs the passed info, returns whether uploaded to server
+    # logs the passed info, returns whether uploaded to server
     def info(code, comment=None) -> bool:
         return Logger.persistLog(code, comment)
-        
+
     @staticmethod
     def debug(msg):
         logging.getLogger(BLURR_LOGGER_NAME).debug(msg)
@@ -84,10 +77,9 @@ class Logger(object):
     def persistRemainingLogs():
         logList = []
         currentUser = User.getEmail()
-        
-        
         mac = get_mac_address()
-        toPersistLogs = Logger.localStorage.get(LOCAL_LOGS_TO_UPLOAD_TABLE).get(currentUser)
+        toPersistLogs = Logger.localStorage.get(
+            LOCAL_LOGS_TO_UPLOAD_TABLE).get(currentUser)
         for entry in toPersistLogs.values():
             obj = entry.toDict()
             obj["mac"] = mac
@@ -110,21 +102,23 @@ class Logger(object):
     @staticmethod
     def persistLog(code, comment) -> bool:
         jwtToken = User.getJwtToken()
-        #do not log if the user is not authorized
+        # do not log if the user is not authorized
         if jwtToken == None:
             return False
-            
+
         currentUser = User.getEmail()
         milis = int(time.time() * 1000)
         new_log = LogEntry(code, None, milis)
-        Logger.localStorage.get(LOCAL_LOG_TABLE).get(currentUser).append(new_log)
+        Logger.localStorage.get(LOCAL_LOG_TABLE).get(
+            currentUser).append(new_log)
 
         res = Server.log(jwtToken, code, comment, milis, get_mac_address())
         if res != Server.OK:
-            Logger.localStorage.get(LOCAL_LOGS_TO_UPLOAD_TABLE).get(currentUser).append(new_log)
+            Logger.localStorage.get(LOCAL_LOGS_TO_UPLOAD_TABLE).get(
+                currentUser).append(new_log)
             Logger.localStorage.commit()
             Logger.debug("Couldn't log to server, persisting logs")
-            return False    
+            return False
         else:
             Logger.localStorage.commit()
             return True
