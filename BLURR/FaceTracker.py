@@ -30,7 +30,6 @@ class FaceTracker():
         #iterate over all objects and check whether they were already recognized
         for id in objects:
             if not id in self.trackedFaces or not self.trackedFaces[id][IDENTIFIED]:
-                print("New face")
                 #if no, search for the frame bounding the object
                 rect = self.searchForFrame(objects[id], rects)
                 if rect==None:
@@ -57,7 +56,6 @@ class FaceTracker():
                             #if some encoding matches the face -> mark as identified
                             foundMatch = True
                             self.trackedFaces[id] = {NAME:person, IDENTIFIED: True, COUNTER: 0}
-                            print("Recognized " + str(person)) 
                             break
                     #if no match was found -> add unrecognized face
                     if not foundMatch:

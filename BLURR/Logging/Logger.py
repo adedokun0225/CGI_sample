@@ -127,6 +127,4 @@ class Logger(object):
             return False    
         else:
             Logger.localStorage.commit()
-            (_, body) = Server.getOwnLogs(jwtToken, milis-3000000, milis)
-            print(body)
             return True

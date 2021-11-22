@@ -1,8 +1,7 @@
 import requests
-
-#SERVER_URL = "https://blurr-logging.eu-central-1.elasticbeanstalk.com"
-SERVER_URL = "http://localhost:5000"
-VERIFY_REQUESTS = False
+SERVER_URL = "https://blurr-332209.ey.r.appspot.com/"
+#SERVER_URL = "http://localhost:5000"
+VERIFY_REQUESTS = True
 
 class Server():
 
@@ -82,6 +81,7 @@ class Server():
             body = res.json()
             jwtToken = str(body["type"]) + " " + str(body["jwtToken"])
             return (Server.OK, jwtToken, body["refreshToken"])
+        return (res.status_code, None, None)
 
     @staticmethod
     def isBlurrEnabled(jwtToken):
