@@ -44,17 +44,20 @@ class Logger(object):
     # initializes logging part
     @staticmethod
     def initialize():
+        # initialize logging tables
         Logger.localStorage = LocalStorage.getConnection()
         Logger.localStorage.createMapIfNotExists(LOCAL_LOG_TABLE)
         Logger.localStorage.createMapIfNotExists(LOCAL_LOGS_TO_UPLOAD_TABLE)
+
+        # get mac address for logs
+        Logger.mac = get_mac_address()
+
+        # initialize the local logger
         logger = logging.getLogger(BLURR_LOGGER_NAME)
         logger.setLevel(logging.DEBUG)
-
         # prepare formatter and clear s
         formatter = logging.Formatter("%(asctime)s - %(message)s")
-
         logger.handlers.clear()
-
         # logging to console
         sh = logging.StreamHandler(sys.stdout)
         sh.setFormatter(formatter)
@@ -77,7 +80,7 @@ class Logger(object):
     def persistRemainingLogs():
         logList = []
         currentUser = User.getEmail()
-        mac = get_mac_address()
+        mac = Logger.mac
         toPersistLogs = Logger.localStorage.get(
             LOCAL_LOGS_TO_UPLOAD_TABLE).get(currentUser)
         for entry in toPersistLogs.values():
@@ -112,7 +115,7 @@ class Logger(object):
         Logger.localStorage.get(LOCAL_LOG_TABLE).get(
             currentUser).append(new_log)
 
-        res = Server.log(jwtToken, code, comment, milis, get_mac_address())
+        res = Server.log(jwtToken, code, comment, milis, Logger.mac)
         if res != Server.OK:
             Logger.localStorage.get(LOCAL_LOGS_TO_UPLOAD_TABLE).get(
                 currentUser).append(new_log)
