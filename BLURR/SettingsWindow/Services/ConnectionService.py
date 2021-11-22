@@ -16,8 +16,6 @@ class ConnectionService():
         return User.authorize()
 
     def logIn(self, email, password):
-        #(code, _) = self.serverConnection.logIn(email=email, password=password)
-        # return not code == UNAUTHORIZED
         return User.signIn(email, password)
 
     def singUp(self, email):
@@ -32,5 +30,5 @@ class ConnectionService():
         return ret
 
     def logOut(self):
-        self.serverConnection.logOut()
+        User.signOut()
         self.setTracking(False)

@@ -35,7 +35,7 @@ class User():
             return False
 
         User.credentials.signedIn(email, jwtToken, refreshToken)
-        User.storage.commit()
+        User.commit()
         User.setPassword(email, password)
         return User.authorize()
 
@@ -45,6 +45,11 @@ class User():
         if code == Server.OK:
             User.credentials.setEmail(email)
         return body
+
+    @staticmethod
+    def signOut():
+        User.credentials.signOut()
+        User.commit()
 
     @staticmethod
     def commit():

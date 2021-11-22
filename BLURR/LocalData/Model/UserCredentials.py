@@ -1,14 +1,11 @@
 import persistent
 
+
 class UserCredentials(persistent.Persistent):
 
     def __init__(self) -> None:
         super().__init__()
-        self.email = None
-        self.authorized = False
-        self.jwtToken = None
-        self.refreshToken = None
-        self.blurrEnabled = False
+        self.defaultFields()
 
     def getEmail(self):
         return self.email
@@ -21,7 +18,7 @@ class UserCredentials(persistent.Persistent):
 
     def setAuthorized(self, authorized):
         self.authorized = authorized
-    
+
     def getJwtToken(self):
         return self.jwtToken
 
@@ -45,3 +42,13 @@ class UserCredentials(persistent.Persistent):
 
     def setBlurrEnabled(self, enabled):
         self.blurrEnabled = enabled
+
+    def signOut(self):
+        self.defaultFields()
+
+    def defaultFields(self):
+        self.email = None
+        self.authorized = False
+        self.jwtToken = None
+        self.refreshToken = None
+        self.blurrEnabled = False
