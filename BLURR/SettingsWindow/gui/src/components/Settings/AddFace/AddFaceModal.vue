@@ -71,7 +71,7 @@
         this.isLoading = true;
         let res = await this.addFaceEncoding(this.nameToAdd);
         this.isLoading = false;
-        if (res.succesful) {
+        if (res.successful) {
           this.encodingAdded();
           this.hide();
         } else {
