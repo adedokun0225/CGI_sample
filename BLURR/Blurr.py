@@ -1,6 +1,6 @@
 from time import time
 from BlockingOverlay.MainBlockerWindow import MainBlockerWindow
-from ObjectTracker import ObjectTracker
+from Tracking.ObjectTracker import ObjectTracker
 from SystemTray.SystemTray import SystemTray
 from SettingsWindow.BlurrSettingsWindow import SettingsWindow
 from Logging.Logger import Logger
@@ -150,7 +150,7 @@ class Blurr():
                 # get the tracking result from the object tracker
                 (valid, code) = self.tracker.checkSample()
                 if not valid:
-                    # block the screen with the apriopriate reason if invalid camera input has been detected
+                    # block the screen with the appropriate reason if invalid camera input has been detected
                     if self.wasAppClosed():
                         return
                     self.blocked = True

@@ -1,4 +1,4 @@
-from ObjectTracker import ObjectTracker
+from Tracking.ObjectTracker import ObjectTracker
 import sys
 import eel
 import threading
