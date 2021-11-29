@@ -1,4 +1,5 @@
 import keyboard
+from typing import Callable
 
 PIN_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'backspace']
 FORBIDDEN_KEYS = ['left alt', 'right alt',
@@ -7,7 +8,7 @@ FORBIDDEN_KEYS = ['left alt', 'right alt',
 
 class KeyboardHook():
 
-    def __init__(self, pinFn: function, blockFn: function):
+    def __init__(self, pinFn: Callable, blockFn: Callable):
         self.pinFn = pinFn
         self.blockFn = blockFn
         pass
