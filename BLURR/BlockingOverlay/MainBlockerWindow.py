@@ -15,9 +15,7 @@ class MainBlockerWindow():
     def __init__(self, setTracking) -> None:
         self.setTracking = setTracking
 
-        def fn():
-            self.lock = True
-        self.kHook = KeyboardHook(self.pinInput, fn)
+        self.kHook = KeyboardHook(self.pinInput)
 
     # block the screen via the custom overlay
     def show(self, message, password):

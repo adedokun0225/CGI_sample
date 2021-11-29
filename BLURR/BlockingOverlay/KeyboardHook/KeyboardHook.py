@@ -1,4 +1,4 @@
-import keyboard
+from pynput import keyboard
 from typing import Callable
 
 PIN_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'backspace']
@@ -10,18 +10,28 @@ class KeyboardHook():
 
     def __init__(self, pinFn: Callable, blockFn: Callable):
         self.pinFn = pinFn
-        self.blockFn = blockFn
         pass
 
     # hooks for pinInput and blocks the control keys
     def hook(self):
-        for key in PIN_KEYS:
-            keyboard.add_hotkey(key, lambda: self.pinInput(key))
-            keyboard.block_key(key)
+        if self.listener is not None:
+            return
+        self.listener = keyboard.Listener(
+            suppress=True,
+            on_press=self.on_press)
+        self.listener.start()
 
-        for key in FORBIDDEN_KEYS:
-            keyboard.add_hotkey(key, lambda: self.blockFn(key))
-            keyboard.block_key(key)
+    def on_press(self, key):
+        if hasattr(key, "char"):
+            self.pinFn(key.char)
+            return
 
-    def unhook():
-        keyboard.unhook_all()
+        if key == keyboard.Key.backspace:
+            self.pinFn("back")
+            return
+
+        return
+
+    def unhook(self):
+        self.listener.stop()
+        self.listener = None
