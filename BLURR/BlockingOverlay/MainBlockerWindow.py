@@ -275,7 +275,7 @@ class MainBlockerWindow():
 
     # close the overlays
     def close(self):
-        self.hm.UnhookKeyboard()
+        self.kHook.unhook()
         self.root.destroy()
         self.root.quit()
 
