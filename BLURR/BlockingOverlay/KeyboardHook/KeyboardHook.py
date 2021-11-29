@@ -10,6 +10,7 @@ class KeyboardHook():
 
     def __init__(self, pinFn: Callable, blockFn: Callable):
         self.pinFn = pinFn
+        self.listener = None
         pass
 
     # hooks for pinInput and blocks the control keys
