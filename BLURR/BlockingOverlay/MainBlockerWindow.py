@@ -1,6 +1,5 @@
 from tkinter import *
 from PIL import ImageTk, Image
-import pyWinhook as pyHook
 import ctypes
 import scipy.ndimage as scimage
 import numpy
@@ -14,8 +13,7 @@ class MainBlockerWindow():
 
     def __init__(self, setTracking) -> None:
         self.setTracking = setTracking
-
-        self.kHook = KeyboardHook(self.pinInput)
+        self.kHook = KeyboardHook(self.pinInput, self.closeAndBlock)
 
     # block the screen via the custom overlay
     def show(self, message, password):
@@ -95,7 +93,7 @@ class MainBlockerWindow():
         blurrLabel.grid(column=1, row=4, pady=5)
 
     def renderRight(self):
-        lbl = Label(text="Press F4 to disable tracking and lock the station", font=(
+        lbl = Label(text="Press DEL to disable tracking and lock the station", font=(
             "Avenir Next", 14), justify=CENTER,  cursor="hand2")
         lbl.grid(column=0, row=6, sticky=SW, pady=(0, 20), padx=(20, 0))
         lbl = Label(text="Developed with the Support of the Innovation Technology Campus – ITC in Munich", font=(
@@ -212,39 +210,6 @@ class MainBlockerWindow():
                 if self.failedAttempts >= 3:
                     self.lock = True
             self.typedPwd = ""
-
-    # scan for keyboard events
-    def onKeyboard(self):
-        def onKey(event):
-            if event.Key.lower() in ['lmenu', 'rmenu', 'lcontrol', 'rcontrol', 'delete']:
-                self.lock = True
-                return False
-            elif event.Key.lower() in ['lwin', 'tab']:
-                return False
-            # digits for the pin code
-            elif event.Key.lower() in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
-                self.typedPwd += event.Key.lower()
-                # pin code has a fixed length of 4
-                if len(self.typedPwd) == 4:
-                    # if it was correct, unlock
-                    if self.typedPwd == self.password:
-                        self.toClose = True
-                    # otherwise add failed attempt and lock the screen if needed
-                    else:
-                        self.failedAttempts += 1
-                        if self.failedAttempts >= 3:
-                            self.lock = True
-                    self.typedPwd = ""
-            elif event.Key.lower() in ['back']:
-                if len(self.typedPwd) > 0:
-                    self.typedPwd = self.typedPwd[0:len(self.typedPwd)-1]
-            # to take screenshots
-            elif event.Key.lower() in ["snapshot"]:
-                return True
-            elif event.Key.lower() in ["f4"]:
-                self.closeAndBlock()
-            return False
-        return onKey
 
     def closeAndBlock(self):
         self.toClose = True
