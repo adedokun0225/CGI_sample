@@ -47,7 +47,7 @@
       selectOption(option) {
         this.selectedOption = option;
       },
-      setUp() {
+      async setUp() {
         this.firstStart = false;
         this.firstStart = !(await this.wasSetUp());
       },
