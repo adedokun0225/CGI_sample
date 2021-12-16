@@ -221,9 +221,12 @@ class MainBlockerWindow():
             self.updatePin(len(self.typedPwd))
             if self.lock:
                 self.lockStation()
+                
             if self.toClose:
                 self.close()
-            self.root.after(10, self.updateGui())
+            else:
+                #if not closed schedule another update
+                self.root.after(10, self.updateGui())
         return do
 
     # get focus to stay on top
