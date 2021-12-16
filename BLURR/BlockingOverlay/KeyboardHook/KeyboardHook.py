@@ -20,19 +20,24 @@ class KeyboardHook():
         self.listener.start()
 
     def on_press(self, key):
+        # pass all the typed characters to pin
         if hasattr(key, "char"):
             self.pinFn(key.char)
             return
 
+        # special treatment for backspace
         if key == keyboard.Key.backspace:
             self.pinFn("back")
             return
 
+        # turn off on delete
         if key == keyboard.Key.delete:
             self.blockFn()
 
         return
 
+    # stops the hook
     def unhook(self):
-        self.listener.stop()
+        if self.listener is not None:
+            self.listener.stop()
         self.listener = None
