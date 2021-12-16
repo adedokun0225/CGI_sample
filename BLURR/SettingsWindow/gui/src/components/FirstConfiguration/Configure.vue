@@ -58,7 +58,7 @@
       start(tracking) {
         let settings = {
           tracking: tracking,
-          faceRecognition: this.faceRecognition,
+          faceRecognition: this.useFaceRecognition,
           unlockPin: this.pinCode,
         };
         this.setUp(settings);
