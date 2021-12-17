@@ -1,12 +1,9 @@
 from tkinter import *
 from PIL import ImageTk, Image
-import ctypes
-import scipy.ndimage as scimage
-import numpy
-from mss import mss
+from System.System import System
 from BlockingOverlay.Components.CodeInput import CodeInput
-from BlockingOverlay.Toolkit.EnumerateMonitors import *
 from BlockingOverlay.KeyboardHook.KeyboardHook import KeyboardHook
+from BlockingOverlay.Monitors.Monitors import Monitors
 
 
 class MainBlockerWindow():
@@ -14,45 +11,43 @@ class MainBlockerWindow():
     def __init__(self, setTracking) -> None:
         self.setTracking = setTracking
         self.kHook = KeyboardHook(self.pinInput, self.closeAndBlock)
+        self.monitors = Monitors()
 
     # block the screen via the custom overlay
     def show(self, message, password):
-        ctypes.windll.shcore.SetProcessDpiAwareness(0)
+
+        # set vars
         self.password = password
+        self.msg = message
         self.lock = False
         self.toClose = False
 
-        #self.hm.KeyDown = self.onKeyboard()
-        # self.hm.HookKeyboard()
+        # block the input from the keyboard
         self.kHook.hook()
+
         # reset GUI
         self.overlays = []
+        self.monitors.reset()
+
         # reset pin code field
         self.typedPwd = ""
         self.failedAttempts = 0
-        self.msg = message
+
+        # create the main blocking overlay (on the main monitor)
         self.root = Tk()
         self.root.overrideredirect(True)
-        (width, height) = self.getMainDims()
-        print(self.getMainDims())
+        (width, height) = self.monitors.getMainDims()
         self.root.geometry("{0}x{1}+0+0".format(width, height))
-        # TODO: Add Blurry effect
         self.maxScaling = 100
-        self.root.wm_attributes("-disabled", True)
-        self.root.wm_attributes("-transparentcolor", "white")
-        bcg = ImageTk.PhotoImage(self.getBlurryBackground(
-            0, 0, self.root.winfo_screenwidth(), self.root.winfo_screenheight()))
-        background = Label(self.root, image=bcg)
-        # background.place(x=0, y=0, relwidth=1, relheight=1)
-        # self.root.attributes("-fullscreen", True)
-        # block close attempts
-        self.root.bind("<FocusOut>", self.getFocus())
+        if System.isWindows():
+            self.root.wm_attributes("-disabled", True)
+        self.root.bind("<FocusOut>", self.getFocus)
         # render GUI
         self.render()
         # get focus to stay on top
-        self.root.after(10, self.getFocus(), 0)
-        self.root.after(10, self.scanForMonitors())
-        self.root.after(10, self.updateGui())
+        self.root.after(10, self.getFocus, 0)
+        self.root.after(10, self.scanForMonitors)
+        self.root.after(10, self.updateGui)
         self.root.mainloop()
 
     # render the overlay components
@@ -60,18 +55,23 @@ class MainBlockerWindow():
         # configure grid
         self.root.rowconfigure((0, 6), weight=1)
         self.root.columnconfigure((0, 2), weight=1, uniform="rand")
-        self.renderLogo()
+        self.renderLeft()
         self.renderCenter()
         self.renderRight()
 
-    def renderLogo(self):
+    # renders the left side of the main blocking overlay (blurr logo in the top left corner + label in the bottom left corner)
+    def renderLeft(self):
         logo = Image.open("Assets/BLURR.png")
         logo = logo.resize((125, 10))
         logo = ImageTk.PhotoImage(logo)
         logoLbl = Label(self.root, image=logo)
         logoLbl.image = logo
         logoLbl.grid(column=0, row=0, sticky=NW, ipadx=80, ipady=45)
+        lbl = Label(text="Press DEL to disable tracking and lock the station", font=(
+            "Avenir Next", 14), justify=CENTER,  cursor="hand2")
+        lbl.grid(column=0, row=6, sticky=SW, pady=(0, 20), padx=(20, 0))
 
+    # renders the central column of the main blocking window (icon + message)
     def renderCenter(self):
         # rendering the block icon
         img = Image.open("Assets/BlockedIcon.png")
@@ -92,103 +92,49 @@ class MainBlockerWindow():
             "Avenir Next", 18), justify=CENTER)
         blurrLabel.grid(column=1, row=4, pady=5)
 
+    # renders the right side of the main blocking window (ITC label bottom right corner)
     def renderRight(self):
-        lbl = Label(text="Press DEL to disable tracking and lock the station", font=(
-            "Avenir Next", 14), justify=CENTER,  cursor="hand2")
-        lbl.grid(column=0, row=6, sticky=SW, pady=(0, 20), padx=(20, 0))
         lbl = Label(text="Developed with the Support of the Innovation Technology Campus – ITC in Munich", font=(
             "Avenir Next", 8), justify=CENTER,  cursor="hand2")
         lbl.grid(column=2, row=6, sticky=SE, pady=(0, 20), padx=(0, 20))
 
-    def getBlurryBackground(self, x, y, width, height):
-        sct = mss()
-        img = numpy.array(
-            sct.grab({"top": y, "left": x, "width": width, "height": height}))
-        screen_arr = scimage.gaussian_filter(img, sigma=1.8)
-
-        return Image.fromarray(screen_arr).resize((width, height))
-
-    def getMainDims(self):
-        monitors = list(enumerate_monitors())
-        for monitor in monitors:
-            if monitor.x == 0 and monitor.y == 0:
-                return (monitor.width, monitor.height)
-
     # periodically scan for new monitors and block them if needed
     def scanForMonitors(self):
-        def do():
-            self.root.call('wm', 'attributes', '.', '-topmost', True)
-            # get real resolutions
-            monitors = list(enumerate_monitors())
-            # get main monitor info
-            maxScaling = None
-            for monitor in monitors:
-                if monitor.x == 0 and monitor.y == 0:
-                    mainMonitor = monitor
-                if not maxScaling or monitor.scaling > maxScaling:
-                    maxScaling = monitor.scaling
-            maxScaling = 100
-            for monitor in monitors:
-                # skip main monitor
-                if monitor.x == 0 and monitor.y == 0:
-                    continue
-                # check if the monitor was already processed
-                found = False
-                for overlay in self.overlays:
-                    if monitor.x == overlay['x'] and monitor.y == overlay['y'] and monitor.height == overlay['h'] and monitor.width == overlay['w']:
-                        found = True
-                        break
-                if not found:
-                    # * monitor.width_mm / mainMonitor.width_mm
-                    # * monitor.height_mm / mainMonitor.height_mm
-                    width = round(monitor.width /
-                                  monitor.scaling * mainMonitor.scaling)
-                    height = round(monitor.height /
-                                   monitor.scaling * mainMonitor.scaling)
-                    geo = str(width) + "x" + str(height)
-                    # geo = str(int(monitor.width)) + "x" + str(int(monitor.height))
-                    # prepare the geo string
-                    geoPos = ""
-                    if monitor.x < 0:
-                        geoPos += str(int(monitor.x))
-                    else:
-                        geoPos += "+" + str(int(monitor.x))
+        # do nothing if the blocking overlay is to be closed anyways
+        if self.toClose:
+            return
 
-                    if monitor.y < 0:
-                        geoPos += str(int(monitor.y))
-                    else:
-                        geoPos += "+" + str(int(monitor.y))
+        self.root.call('wm', 'attributes', '.', '-topmost', True)
+        # get all monitors for which no overlay was created so far
+        newGeos = self.monitors.getNewMonitors()
+        for newGeo in newGeos:
+            # create an overlay for them
+            self.createBlankOverlayForGeo(newGeo)
 
-                    geo += geoPos
-                    # render new overlay for the found monitor
-                    overlay = Toplevel(self.root)
-                    overlay.overrideredirect(True)
-                    overlay.geometry(geo)
-                    bcg = self.getBlurryBackground(
-                        monitor.x, monitor.y, width, height)
-                    bcg.resize((1280, 720))
-                    bcg = ImageTk.PhotoImage(bcg)
-                    background = Label(overlay, image=bcg)
-                    background.image = bcg
-                    # background.place(x=0, y=0, relwidth=1, relheight=1)
-                    overlay.wm_attributes("-topmost", 1)
-                    overlay.wm_attributes("-alpha", 1)
-                    overlay.state("zoomed")
-                    # overlay.attributes("-fullscreen", True)
-                    self.root.call('wm', 'attributes', '.', '-topmost', True)
-                    self.root.focus_force()
-                    # overlay.geometry(str(overlay.winfo_screenwidth())+"x"+str(overlay.winfo_screenheight())+geoPos)
-                    print("Adding overlay with geo: " + geo)
-                    print({'x': monitor.x, 'y': monitor.y, 'h': monitor.height,
-                          'w': monitor.width, "overlay": overlay})
-                    self.overlays.append(
-                        {'x': monitor.x, 'y': monitor.y, 'h': monitor.height, 'w': monitor.width, "overlay": overlay})
-            self.root.after(100, self.scanForMonitors())
-        return do
+        # setup for the next occurence
+        self.root.after(100, self.scanForMonitors)
 
+    # creates a white overlay on the position specified by geo
+    def createBlankOverlayForGeo(self, geo):
+
+        # create an overlay
+        overlay = Toplevel(self.root)
+        overlay.overrideredirect(True)
+        overlay.geometry(geo)
+        overlay.wm_attributes("-topmost", 1)
+        overlay.wm_attributes("-alpha", 1)
+        if System.isWindows():
+            overlay.state("zoomed")
+        self.root.call('wm', 'attributes', '.', '-topmost', True)
+        self.root.focus_force()
+        print("Adding overlay with geo: " + geo)
+        self.overlays.append(overlay)
+
+    # updates the number of colored circles to indicate the pin digits
     def updatePin(self, count):
         self.codeInput.set(count)
 
+    # updates the input pin code on new keyboard input
     def pinInput(self, key: str):
         if "back" in key:
             if len(self.typedPwd) > 0:
@@ -211,35 +157,37 @@ class MainBlockerWindow():
                     self.lock = True
             self.typedPwd = ""
 
+    # closes the blocking overlay, locks the computer and turns off tracking
     def closeAndBlock(self):
         self.toClose = True
         self.lockStation()
         self.setTracking(False)
 
+    # periodic update for the gui
     def updateGui(self):
-        def do():
-            self.updatePin(len(self.typedPwd))
-            if self.lock:
-                self.lockStation()
-                
-            if self.toClose:
-                self.close()
-            else:
-                #if not closed schedule another update
-                self.root.after(10, self.updateGui())
-        return do
+        # update the length of input pin
+        self.updatePin(len(self.typedPwd))
+
+        # if the station is to be locked -> lock it
+        if self.lock:
+            self.lockStation()
+
+        # close the window if it was closed
+        if self.toClose:
+            self.close()
+        else:
+            # if not closed schedule another update
+            self.root.after(10, self.updateGui)
 
     # get focus to stay on top
     def getFocus(self):
-        def focus(event):
-            # put all additional overlays to the top
-            for overlay in self.overlays:
-                window = overlay["overlay"]
-                window.lift()
-            # get focus for the main window
-            self.root.call('wm', 'attributes', '.', '-topmost', True)
-            self.root.focus_force()
-        return focus
+        # put all additional overlays to the top
+        for overlay in self.overlays:
+            window = overlay["overlay"]
+            window.lift()
+        # get focus for the main window
+        self.root.call('wm', 'attributes', '.', '-topmost', True)
+        self.root.focus_force()
 
     # close the overlays
     def close(self):
@@ -249,5 +197,8 @@ class MainBlockerWindow():
 
     # lock the computer using the windows default functionality
     def lockStation(self):
-        ctypes.windll.user32.LockWorkStation()
-        self.close()
+        try:
+            System.logOut()
+            self.close()
+        except Exception as err:
+            print(str(err))

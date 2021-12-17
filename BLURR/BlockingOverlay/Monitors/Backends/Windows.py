@@ -1,33 +1,8 @@
+from BlockingOverlay.Monitors.Monitor import Monitor
 import typing as T
+import ctypes
 
-import enum
-import typing as T
-from dataclasses import dataclass
-
-
-@dataclass
-class Monitor:
-    """Stores the resolution and position of a monitor."""
-
-    x: int
-    y: int
-    width: int
-    height: int
-    scaling: int
-    width_mm: T.Optional[int] = None
-    height_mm: T.Optional[int] = None
-    name: T.Optional[str] = None
-
-    def __repr__(self) -> str:
-        return (
-            f"Monitor("
-            f"x={self.x}, y={self.y}, "
-            f"width={self.width}, height={self.height}, "
-            f"width_mm={self.width_mm}, height_mm={self.height_mm}, "
-            f"name={self.name!r}, "
-            f"scaling={self.scaling}"
-            f")"
-        )
+ctypes.windll.shcore.SetProcessDpiAwareness(0)
 
 
 def enumerate_monitors() -> T.Iterable[Monitor]:
@@ -72,7 +47,7 @@ def enumerate_monitors() -> T.Iterable[Monitor]:
         v_size = ctypes.windll.gdi32.GetDeviceCaps(dc, VERTSIZE)
         virtual = ctypes.windll.gdi32.GetDeviceCaps(dc, HORZRES)
         physical = ctypes.windll.gdi32.GetDeviceCaps(dc, DESKTOPHORZRES)
-        if(physical == 0): \
+        if(physical == 0):
             return 1
         scaling = 100 * virtual/physical
         rct = rect.contents
@@ -89,7 +64,6 @@ def enumerate_monitors() -> T.Iterable[Monitor]:
             )
         )
         return 1
-
 
     # On Python 3.8.X GetDC randomly fails returning an invalid DC.
     # To workaround this request a number of DCs until a valid DC is returned.

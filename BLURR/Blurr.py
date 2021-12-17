@@ -6,6 +6,7 @@ from SettingsWindow.BlurrSettingsWindow import SettingsWindow
 from Logging.Logger import Logger
 from LocalData.Settings import Settings
 from LocalData.User import User
+from System.System import System
 import Logging.Logger as Log
 import Lib.Constants as const
 from LocalData.LocalStorage import LocalStorage
@@ -34,28 +35,28 @@ class Blurr():
 
     # entry point for the app
     def startApp(self):
-        try:
-            # configure the app on first start
-            if not Settings.isSetUp():
-                self.configure()
+        # try:
+        # configure the app on first start
+        if not Settings.isSetUp():
+            self.configure()
 
-            isAuthorized = self.userLoggedIn()
+        isAuthorized = self.userLoggedIn()
 
-            if not isAuthorized:
-                self.settingsWindow.start()
+        if not isAuthorized or System.isLinux():
+            self.settingsWindow.start()
 
-            self.isRunning = isAuthorized and Settings.get(
-                Settings.TRACKING_ON)
-            self.blocked = False
+        self.isRunning = isAuthorized and Settings.get(
+            Settings.TRACKING_ON)
+        self.blocked = False
 
-            self.startLoggingThread()
+        self.startLoggingThread()
 
-            # run the main thread of the app
-            self.mainThread()
-        except Exception as err:
-            Logger.error(str(err))
-            self.setTracking(False)
-            return
+        # run the main thread of the app
+        self.mainThread()
+        # except Exception as err:
+        # Logger.error(str(err))
+        # self.setTracking(False)
+        # return
 
     # starts the logging deamon, which logs the current usage status
     def startLoggingThread(self):
