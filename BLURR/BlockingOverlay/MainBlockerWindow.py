@@ -180,7 +180,7 @@ class MainBlockerWindow():
             self.root.after(10, self.updateGui)
 
     # get focus to stay on top
-    def getFocus(self):
+    def getFocus(self, arg):
         # put all additional overlays to the top
         for overlay in self.overlays:
             window = overlay["overlay"]
