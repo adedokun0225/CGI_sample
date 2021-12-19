@@ -1,4 +1,3 @@
-from os import stat
 from LocalData.Model.LogEntry import LogEntry
 from LocalData.LocalStorage import LocalStorage, Database
 from LocalData.User import User
