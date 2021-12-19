@@ -8,7 +8,6 @@ from LocalData.Settings import Settings
 from LocalData.User import User
 from System.System import System
 import Logging.Logger as Log
-import Lib.Constants as const
 from LocalData.LocalStorage import LocalStorage
 import threading
 import sys
