@@ -33,4 +33,11 @@ public class TokenRefreshResponse {
         this.jwtToken = jwtToken;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }

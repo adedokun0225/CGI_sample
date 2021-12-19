@@ -58,7 +58,6 @@ class Blurr():
             return
 
     # starts the logging deamon, which logs the current usage status
-
     def startLoggingThread(self):
         if not self.loggingStarted:
             loggingThread = threading.Thread(None, target=self.loggingThread)

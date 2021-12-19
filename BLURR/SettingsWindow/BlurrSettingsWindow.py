@@ -106,8 +106,6 @@ class SettingsWindow():
         @eel.expose
         def logIn(username, password):
             res = self.connectionService.logIn(username, password)
-            if res:
-                self.settings.trackingAfterLogin(self.setTracking)
             return res
 
         @eel.expose

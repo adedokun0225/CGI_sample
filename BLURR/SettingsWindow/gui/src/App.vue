@@ -47,7 +47,22 @@ export default {
     selectOption(option) {
       this.selectedOption = option;
     },
-    async setUp() {
+    methods: {
+      selectOption(option) {
+        this.selectedOption = option;
+      },
+      async setUp() {
+        this.firstStart = false;
+        this.firstStart = !(await this.wasSetUp());
+      },
+      signIn() {
+        this.loggedIn = true;
+      },
+      loggedOut() {
+        this.loggedIn = false;
+      },
+    },
+    async created() {
       this.firstStart = !(await this.wasSetUp());
     },
     signIn() {

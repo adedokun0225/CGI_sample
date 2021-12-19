@@ -135,6 +135,3 @@ class SettingsService():
         if currentPin == pin:
             fn()
         return currentPin == pin
-
-    def trackingAfterLogin(self, toggleMethod):
-        toggleMethod(True)
