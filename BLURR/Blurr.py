@@ -17,6 +17,7 @@ import time
 class Blurr():
 
     def __init__(self) -> None:
+        # if couldn't initialize the
         LocalStorage.initialize()
         Settings.initialize()
         User.initialize()
@@ -34,7 +35,6 @@ class Blurr():
 
     # entry point for the app
     def startApp(self):
-        # try:
         # configure the app on first start
         if not Settings.isSetUp():
             self.configure()
@@ -52,10 +52,6 @@ class Blurr():
 
         # run the main thread of the app
         self.mainThread()
-        # except Exception as err:
-        # Logger.error(str(err))
-        # self.setTracking(False)
-        # return
 
     # starts the logging deamon, which logs the current usage status
     def startLoggingThread(self):
