@@ -9,6 +9,7 @@ from LocalData.User import User
 from System.System import System
 import Logging.Logger as Log
 from LocalData.LocalStorage import LocalStorage
+from MessageBoxes.ErrorMessage import ErrorMessage
 import threading
 import sys
 import time
@@ -17,8 +18,11 @@ import time
 class Blurr():
 
     def __init__(self) -> None:
-        # if couldn't initialize the
-        LocalStorage.initialize()
+        # if couldn't initialize the database -> another instance of Blurr is running
+        self.initialized = LocalStorage.initialize()
+        if not self.initialized:
+            return
+
         Settings.initialize()
         User.initialize()
         self.tracker = ObjectTracker()
@@ -35,6 +39,13 @@ class Blurr():
 
     # entry point for the app
     def startApp(self):
+
+        # if couldn't initialize the local DB -> show error msg and terminate
+        if not self.initialized:
+            ErrorMessage().show("Cannot start Blurr!",
+                                "It seems that there's another copy of Blurr already running.")
+            return
+
         # configure the app on first start
         if not Settings.isSetUp():
             self.configure()

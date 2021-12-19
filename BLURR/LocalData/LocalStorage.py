@@ -17,24 +17,25 @@ class LocalStorage():
     # initializes the local db at start
     @staticmethod
     def initialize():
+
+        if hasattr(LocalStorage, "initialized"):
+            return False
+
+        dir_path = user_data_dir(APP_NAME, APP_AUTHOR)
+        os.makedirs(dir_path, exist_ok=True)
         try:
-            LocalStorage.wasInitialized()
-        except AttributeError:
-            print("Initializing the db")
-            dir_path = user_data_dir(APP_NAME, APP_AUTHOR)
-            os.makedirs(dir_path, exist_ok=True)
             LocalStorage.storage = ZODB.FileStorage.FileStorage(
                 dir_path + "/" + STORAGE_FILE)
             LocalStorage.db = ZODB.DB(LocalStorage.storage)
             LocalStorage.connection = LocalStorage.db.open()
+        except Exception as err:
+            return False
 
-            LocalStorage.connectionPool = {}
-
-            def alreadyInit():
-                print("You can only instantiate the db once in the App")
-            LocalStorage.wasInitialized = alreadyInit
+        LocalStorage.connectionPool = {}
+        return True
 
     # returns the database object exclusive for the thread
+
     @staticmethod
     def getConnection():
 
