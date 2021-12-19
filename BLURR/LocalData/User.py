@@ -1,6 +1,7 @@
-from LocalData.LocalStorage import LocalStorage
+from LocalData.LocalStorage import LocalStorage, Database
 from LocalData.Model.UserCredentials import UserCredentials
 from ServerConnection.Server import Server
+from threading import Lock
 import keyring
 
 APP_NAME = "Blurr"
@@ -12,21 +13,21 @@ class User():
 
     @staticmethod
     def initialize():
-        User.storage = LocalStorage.getConnection()
-        if User.storage.has(User.CREDENTIALS):
-            User.credentials = User.storage.get(User.CREDENTIALS)
-        else:
-            User.credentials = UserCredentials()
-            User.storage.set(User.CREDENTIALS, User.credentials)
-            User.storage.commit()
+        User.lock = Lock()
+        User.lock.acquire()
+        transaction = User.getTransaction()
+        if not transaction.has(User.CREDENTIALS):
+            transaction.set(User.CREDENTIALS, UserCredentials())
+            transaction.commit()
+        User.lock.release()
 
     @staticmethod
     def getEmail():
-        return User.credentials.getEmail()
+        return User.getCredentials().getEmail()
 
     @staticmethod
     def isAuthorized():
-        return User.credentials.isAuthorized()
+        return User.getCredentials().isAuthorized()
 
     @staticmethod
     def signIn(email, password) -> bool:
@@ -34,67 +35,80 @@ class User():
         if code != Server.OK:
             return False
 
-        User.credentials.signedIn(email, jwtToken, refreshToken)
+        User.lock.acquire()
+        User.getCredentials().signedIn(email, jwtToken, refreshToken)
         User.commit()
         User.setPassword(email, password)
+        User.lock.release()
         return User.authorize()
 
     @staticmethod
     def signUp(email):
         code, body = Server.signUp(email)
         if code == Server.OK:
-            User.credentials.setEmail(email)
+            User.lock.acquire()
+            User.getCredentials().setEmail(email)
+            User.commit()
+            User.lock.release()
         return body
 
     @staticmethod
     def signOut():
-        User.credentials.signOut()
+        User.lock.acquire()
+        User.getCredentials().signOut()
         User.commit()
+        User.lock.release()
 
     @staticmethod
     def commit():
-        User.storage.commit()
+        User.getTransaction().commit()
 
     @staticmethod
     # tries to autorize the user, checking if blurr is enabled for this accoutn
     def authorize():
-        if User.credentials.getEmail() == None:
+        if User.getCredentials().getEmail() == None:
             return False
 
-        (code, body) = Server.isBlurrEnabled(User.credentials.getJwtToken())
+        (code, body) = Server.isBlurrEnabled(
+            User.getCredentials().getJwtToken())
         if code == Server.NO_CONNECTION:
-            return User.credentials.isAuthorized()
+            return User.getCredentials().isAuthorized()
 
         if code == Server.OK:
             return body["blurrEnabled"]
 
-        (code, body) = Server.refreshToken(User.credentials.getRefreshToken())
+        (code, body) = Server.refreshToken(
+            User.getCredentials().getRefreshToken())
         if code == Server.NO_CONNECTION:
-            return User.credentials.isAuthorized()
+            return User.getCredentials().isAuthorized()
 
         if code == Server.OK:
-            User.credentials.setJwtToken(
+            User.lock.acquire()
+            User.getCredentials().setJwtToken(
                 str(body["type"]) + " " + str(body["jwtToken"]))
-            User.credentials.setRefreshToken(str(body["refreshToken"]))
+            User.getCredentials().setRefreshToken(str(body["refreshToken"]))
             User.commit()
+            User.lock.release()
             return User.authorize()
 
         (code, jwtToken, refreshToken) = Server.signIn(
-            User.credentials.getEmail(), User.getPassword())
+            User.getCredentials().getEmail(), User.getPassword())
         if code == Server.NO_CONNECTION:
-            return User.credentials.isAuthorized()
+            return User.getCredentials().isAuthorized()
 
         if code == Server.OK:
-            User.credentials.setJwtToken(jwtToken)
-            User.credentials.setRefreshToken(refreshToken)
+            User.lock.acquire()
+            User.getCredentials().setJwtToken(jwtToken)
+            User.getCredentials().setRefreshToken(refreshToken)
             User.commit()
+            User.lock.release()
             return User.authorize()
 
         return False
 
     @staticmethod
     def getPassword():
-        return keyring.get_password(APP_NAME, User.credentials.getEmail())
+        return keyring.get_password(APP_NAME, User.getCredentials().getEmail())
 
     @staticmethod
     def deletePassword(email):
@@ -113,4 +127,12 @@ class User():
     def getJwtToken():
         if not User.authorize():
             return None
-        return User.credentials.getJwtToken()
+        return User.getCredentials().getJwtToken()
+
+    @staticmethod
+    def getCredentials() -> UserCredentials:
+        return User.getTransaction().get(User.CREDENTIALS)
+
+    @staticmethod
+    def getTransaction() -> Database:
+        return LocalStorage.getConnection()

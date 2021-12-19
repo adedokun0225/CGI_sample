@@ -1,7 +1,8 @@
 from appdirs import user_data_dir
-from LocalData.LocalStorage import LocalStorage
+from LocalData.LocalStorage import Database, LocalStorage
 from LocalData.Model.UserSettings import UserSettings
 from LocalData.User import User
+from threading import Lock
 import os
 
 APP_NAME = "Blurr"
@@ -12,7 +13,6 @@ class Settings():
 
     APP_AUTHOR = "CGI"
     SETTINGS_TABLE = "settings"
-
     ENCODED_FACES = "faceEncodings"
     UNLOCK_PIN = "unlockPin"
     TRACKING_ON = "tracking"
@@ -21,7 +21,14 @@ class Settings():
 
     @staticmethod
     def initialize() -> None:
-        Settings.storage = LocalStorage.getConnection()
+        Settings.lock = Lock()
+        Settings.lock.acquire()
+        storage = Settings.getTransaction()
+        storage.get(Settings.SETTINGS_TABLE)
+        storage.commit()
+        Settings.lock.release()
+        # list of email for which the settings were initialized in this session
+        Settings.emails = []
 
     # get the path to the appdata folder
     @staticmethod
@@ -33,10 +40,7 @@ class Settings():
     # check whether it is the first start of the app
     @staticmethod
     def isSetUp():
-        try:
-            return Settings.get(Settings.WAS_SET_UP)
-        except Exception:
-            return False
+        return User.getEmail() is not None and Settings.get(Settings.WAS_SET_UP)
 
     # get the settings for a given key
     @staticmethod
@@ -47,20 +51,31 @@ class Settings():
     # set the settings for a given key
     @staticmethod
     def set(key, value):
-        userSettings = Settings.getCurrentSettings()
+        Settings.lock.acquire()
+        print("Acquired lock")
+        transaction = Settings.getTransaction()
+        userSettings = Settings.getCurrentSettings(
+            acquiredLock=True, transaction=transaction)
         userSettings.set(key, value)
-        Settings.commit()
-        print(userSettings.get(Settings.TRACKING_ON))
+        transaction.commit()
+        Settings.lock.release()
+        print("Released lock")
 
     # sets settings to default
     @staticmethod
     def setDefaultSettings():
+        Settings.lock.acquire()
+        print("Acquired lock")
         try:
-            userSettings = Settings.getCurrentSettings()
+            transaction = Settings.getTransaction()
+            userSettings = Settings.getCurrentSettings(
+                acquiredLock=True, transaction=transaction)
             userSettings.setDefault()
-            Settings.commit()
+            transaction.commit()
         except Exception:
             pass
+        Settings.lock.release()
+        print("Released lock")
 
     # get the path to the .log file for logging
     @staticmethod
@@ -69,13 +84,30 @@ class Settings():
 
     # returns the userSettings for the current user if available and throws an exception otherwise
     @staticmethod
-    def getCurrentSettings() -> UserSettings:
+    def getCurrentSettings(acquiredLock=False, transaction=None) -> UserSettings:
+        # start a new transaction if none was passed
+        if transaction is None:
+            transaction = Settings.getTransaction()
+
         email = User.getEmail()
-        settingsTable = Settings.storage.get(Settings.SETTINGS_TABLE)
+        settingsTable = transaction.get(Settings.SETTINGS_TABLE)
         if email not in settingsTable:
+            if not acquiredLock:
+                Settings.lock.acquire()
+
+            # check whether the settings for this email were initialized in the meantime
+            if email in Settings.emails:
+                if not acquiredLock:
+                    Settings.lock.release()
+                return Settings.getCurrentSettings(transaction=transaction)
+
+            Settings.emails.append(email)
             settingsTable[email] = UserSettings()
+            transaction.commit()
+            if not acquiredLock:
+                Settings.lock.release()
         return settingsTable[email]
 
     @staticmethod
-    def commit() -> None:
-        Settings.storage.commit()
+    def getTransaction() -> Database:
+        return LocalStorage.getConnection()

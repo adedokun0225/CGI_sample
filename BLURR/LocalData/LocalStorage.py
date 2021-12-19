@@ -1,7 +1,10 @@
-import ZODB, ZODB.FileStorage, transaction
+import ZODB
+import ZODB.FileStorage
+import transaction
 from LocalData.PersistanceObjects.AutoIdTree import AutoIdTree
 from appdirs import user_data_dir
 import os
+import threading
 
 from LocalData.PersistanceObjects.MapTree import MapTree
 
@@ -9,8 +12,9 @@ APP_NAME = "Blurr"
 APP_AUTHOR = "CGI"
 STORAGE_FILE = "blurr.fs"
 
+
 class LocalStorage():
-    #initializes the local db at start
+    # initializes the local db at start
     @staticmethod
     def initialize():
         try:
@@ -19,24 +23,37 @@ class LocalStorage():
             print("Initializing the db")
             dir_path = user_data_dir(APP_NAME, APP_AUTHOR)
             os.makedirs(dir_path, exist_ok=True)
-            LocalStorage.storage = ZODB.FileStorage.FileStorage(dir_path + "/" +STORAGE_FILE)
+            LocalStorage.storage = ZODB.FileStorage.FileStorage(
+                dir_path + "/" + STORAGE_FILE)
             LocalStorage.db = ZODB.DB(LocalStorage.storage)
             LocalStorage.connection = LocalStorage.db.open()
+
+            LocalStorage.connectionPool = {}
 
             def alreadyInit():
                 print("You can only instantiate the db once in the App")
             LocalStorage.wasInitialized = alreadyInit
 
-    #returns (db_table, commit_function)
+    # returns the database object exclusive for the thread
     @staticmethod
     def getConnection():
-        #create a new transaction
+
+        # check whether a connection is open for this thread and return it if so
+        thread_id = threading.get_ident()
+        if thread_id in LocalStorage.connectionPool:
+            return LocalStorage.connectionPool[thread_id]
+
+        # create a new transaction
         new_transaction = transaction.TransactionManager()
-        #init new table if the object is not in the db yet
-        return Database(new_transaction)
+
+        # init new table if the object is not in the db yet
+        db = Database(new_transaction)
+        LocalStorage.connectionPool[thread_id] = db
+        return db
+
+# transaction object for db
 
 
-#transaction object for db
 class Database():
 
     def __init__(self, transaction) -> None:
@@ -51,7 +68,7 @@ class Database():
 
     def has(self, key):
         return key in self.root
-    
+
     def set(self, key, value) -> None:
         self.root[key] = value
 
@@ -60,8 +77,4 @@ class Database():
 
     def createMapIfNotExists(self, key):
         if not key in self.root or not isinstance(self.root[key], MapTree):
-            self.root[key] = MapTree()  
-
-    
-    
-    
+            self.root[key] = MapTree()

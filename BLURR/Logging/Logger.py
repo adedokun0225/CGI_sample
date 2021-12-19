@@ -6,6 +6,7 @@ from ServerConnection.Server import Server
 import logging
 import sys
 import time
+import threading
 from getmac import get_mac_address
 
 SERVER_URL = "http://localhost:8080"
@@ -44,10 +45,15 @@ class Logger(object):
     # initializes logging part
     @staticmethod
     def initialize():
+
+        Logger.lock = threading.Lock()
+        Logger.lock.acquire()
         # initialize logging tables
-        Logger.localStorage = LocalStorage.getConnection()
-        Logger.localStorage.createMapIfNotExists(LOCAL_LOG_TABLE)
-        Logger.localStorage.createMapIfNotExists(LOCAL_LOGS_TO_UPLOAD_TABLE)
+        transaction = Logger.getTransaction()
+        transaction.createMapIfNotExists(LOCAL_LOG_TABLE)
+        transaction.createMapIfNotExists(LOCAL_LOGS_TO_UPLOAD_TABLE)
+        transaction.commit()
+        Logger.lock.release()
 
         # get mac address for logs
         Logger.mac = get_mac_address()
@@ -81,7 +87,8 @@ class Logger(object):
         logList = []
         currentUser = User.getEmail()
         mac = Logger.mac
-        toPersistLogs = Logger.localStorage.get(
+        transaction = Logger.getTransaction()
+        toPersistLogs = transaction.get(
             LOCAL_LOGS_TO_UPLOAD_TABLE).get(currentUser)
         for entry in toPersistLogs.values():
             obj = entry.toDict()
@@ -99,8 +106,10 @@ class Logger(object):
 
         if res == Server.OK:
             Logger.debug("Uploaded local logs to server")
+            Logger.lock.acquire()
             toPersistLogs.clear()
-            Logger.localStorage.commit()
+            transaction.commit()
+            Logger.lock.release()
 
     @staticmethod
     def persistLog(code, comment) -> bool:
@@ -112,16 +121,25 @@ class Logger(object):
         currentUser = User.getEmail()
         milis = int(time.time() * 1000)
         new_log = LogEntry(code, None, milis)
-        Logger.localStorage.get(LOCAL_LOG_TABLE).get(
+
+        transaction = Logger.getTransaction()
+        Logger.lock.acquire()
+        transaction.get(LOCAL_LOG_TABLE).get(
             currentUser).append(new_log)
+        transaction.commit()
 
         res = Server.log(jwtToken, code, comment, milis, Logger.mac)
         if res != Server.OK:
-            Logger.localStorage.get(LOCAL_LOGS_TO_UPLOAD_TABLE).get(
+            transaction.get(LOCAL_LOGS_TO_UPLOAD_TABLE).get(
                 currentUser).append(new_log)
-            Logger.localStorage.commit()
+            transaction.commit()
+            Logger.lock.release()
             Logger.debug("Couldn't log to server, persisting logs")
             return False
         else:
-            Logger.localStorage.commit()
+            Logger.lock.release()
             return True
+
+    @staticmethod
+    def getTransaction() -> Database:
+        return LocalStorage.getConnection()
