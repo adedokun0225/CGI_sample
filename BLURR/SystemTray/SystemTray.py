@@ -25,7 +25,7 @@ class SystemTray():
         if self.icon != None:
             self.icon.stop()
 
-        img = Image.open("Assets/BlockedIcon.png")
+        img = Image.open("Assets/BlurrIcon.png")
         menu = pystray.Menu(item("Open Settings", self.openSettings))
         self.icon = pystray.Icon("Blurr", img, "Blurr", menu)
         self.icon.run()
