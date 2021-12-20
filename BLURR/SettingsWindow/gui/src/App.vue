@@ -61,6 +61,20 @@
     async created() {
       this.firstStart = !(await this.wasSetUp());
       this.loggedIn = await this.isLoggedIn();
+      if (!this.loggedIn) {
+        let wasAuthorized = await this.wasAuthorized();
+        if (wasAuthorized) {
+          this.$bvToast.toast(
+            "It seems that your account no longer has a valid license. Please contact your manager.",
+            {
+              title: "Account expired",
+              variant: "warning",
+              toaster: "b-toaster-top-center",
+              appendToast: true,
+            }
+          );
+        }
+      }
       this.loaded = true;
     },
   };
