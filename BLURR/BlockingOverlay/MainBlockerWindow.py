@@ -191,9 +191,9 @@ class MainBlockerWindow():
 
     # close the overlays
     def close(self):
-        self.kHook.unhook()
         self.root.destroy()
         self.root.quit()
+        self.kHook.unhook()
 
     # lock the computer using the windows default functionality
     def lockStation(self):
