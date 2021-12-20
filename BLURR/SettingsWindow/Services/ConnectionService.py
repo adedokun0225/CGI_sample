@@ -9,6 +9,9 @@ class ConnectionService():
     def isUserLoggedIn(self):
         return User.authorize()
 
+    def wasAuthorized(self):
+        return User.isAuthorized()
+
     def logIn(self, email, password):
         return User.signIn(email, password)
 

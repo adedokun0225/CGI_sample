@@ -36,8 +36,10 @@ class User():
             return False
 
         User.lock.acquire()
-        User.getCredentials().signedIn(email, jwtToken, refreshToken)
-        User.commit()
+        transation = User.getTransaction()
+        transation.get(User.CREDENTIALS).signedIn(
+            email, jwtToken, refreshToken)
+        transation.commit()
         User.setPassword(email, password)
         User.lock.release()
         return User.authorize()

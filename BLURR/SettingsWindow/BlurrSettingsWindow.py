@@ -100,6 +100,10 @@ class SettingsWindow():
             return self.connectionService.isUserLoggedIn()
 
         @eel.expose
+        def wasAuthorized():
+            return self.connectionService.wasAuthorized()
+
+        @eel.expose
         def getEmail():
             return self.settings.getEmail()
 
@@ -157,4 +161,8 @@ class SettingsWindow():
         # tidy up and exit
         self.wasStopped = False
         self.isOpen = False
+
+        if not self.connectionService.isUserLoggedIn():
+            self.quitApp()
+
         sys.exit()
