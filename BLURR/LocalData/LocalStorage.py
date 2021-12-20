@@ -42,11 +42,12 @@ class LocalStorage():
         # check whether a connection is open for this thread and return it if so
         thread_id = threading.get_ident()
         if thread_id in LocalStorage.connectionPool:
-            return LocalStorage.connectionPool[thread_id]
+            trans = LocalStorage.connectionPool[thread_id]
+            trans.begin()
+            return trans
 
         # create a new transaction
         new_transaction = transaction.TransactionManager()
-
         # init new table if the object is not in the db yet
         db = Database(new_transaction)
         LocalStorage.connectionPool[thread_id] = db
@@ -79,3 +80,6 @@ class Database():
     def createMapIfNotExists(self, key):
         if not key in self.root or not isinstance(self.root[key], MapTree):
             self.root[key] = MapTree()
+
+    def begin(self):
+        self.transaction.begin()

@@ -84,10 +84,12 @@ class User():
 
         if code == Server.OK:
             User.lock.acquire()
-            User.getCredentials().setJwtToken(
+            transaction = User.getTransaction()
+            transaction.get(User.CREDENTIALS).setJwtToken(
                 str(body["type"]) + " " + str(body["jwtToken"]))
-            User.getCredentials().setRefreshToken(str(body["refreshToken"]))
-            User.commit()
+            transaction.get(User.CREDENTIALS).setRefreshToken(
+                str(body["refreshToken"]))
+            transaction.commit()
             User.lock.release()
             return User.authorize()
 
@@ -98,41 +100,42 @@ class User():
 
         if code == Server.OK:
             User.lock.acquire()
-            User.getCredentials().setJwtToken(jwtToken)
-            User.getCredentials().setRefreshToken(refreshToken)
-            User.commit()
+            transaction = User.getTransaction()
+            transaction.get(User.CREDENTIALS).setJwtToken(jwtToken)
+            transaction.get(User.CREDENTIALS).setRefreshToken(refreshToken)
+            transaction.commit()
             User.lock.release()
             return User.authorize()
 
         return False
 
-    @staticmethod
+    @ staticmethod
     def getPassword():
         return keyring.get_password(APP_NAME, User.getCredentials().getEmail())
 
-    @staticmethod
+    @ staticmethod
     def deletePassword(email):
         try:
             keyring.delete_password(APP_NAME, email)
         except Exception:
             pass
 
-    @staticmethod
+    @ staticmethod
     def setPassword(email, pwd):
         if email == None or len(email) == 0:
             return
         keyring.set_password(APP_NAME, email, pwd)
 
-    @staticmethod
+    @ staticmethod
     def getJwtToken():
         if not User.authorize():
             return None
         return User.getCredentials().getJwtToken()
 
-    @staticmethod
+    @ staticmethod
     def getCredentials() -> UserCredentials:
         return User.getTransaction().get(User.CREDENTIALS)
 
-    @staticmethod
+    @ staticmethod
     def getTransaction() -> Database:
         return LocalStorage.getConnection()

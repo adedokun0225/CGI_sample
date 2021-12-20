@@ -104,8 +104,8 @@ class Logger(object):
         res = Server.oldLog(jwtToken, logList)
 
         if res == Server.OK:
-            Logger.debug("Uploaded local logs to server")
             Logger.lock.acquire()
+            Logger.debug("Uploaded local logs to server")
             toPersistLogs.clear()
             transaction.commit()
             Logger.lock.release()
@@ -119,10 +119,10 @@ class Logger(object):
 
         currentUser = User.getEmail()
         milis = int(time.time() * 1000)
-        new_log = LogEntry(code, None, milis)
 
         transaction = Logger.getTransaction()
         Logger.lock.acquire()
+        new_log = LogEntry(code, None, milis)
         transaction.get(LOCAL_LOG_TABLE).get(
             currentUser).append(new_log)
         transaction.commit()
