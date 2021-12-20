@@ -11,6 +11,9 @@ from LocalData.PersistanceObjects.MapTree import MapTree
 APP_NAME = "Blurr"
 APP_AUTHOR = "CGI"
 STORAGE_FILE = "blurr.fs"
+STORAGE_VERSION = "storage_version"
+
+CURRENT_VERSION = 1
 
 
 class LocalStorage():
@@ -28,11 +31,25 @@ class LocalStorage():
                 dir_path + "/" + STORAGE_FILE)
             LocalStorage.db = ZODB.DB(LocalStorage.storage)
             LocalStorage.connection = LocalStorage.db.open()
+            LocalStorage.configure()
         except Exception as err:
             return False
 
         LocalStorage.connectionPool = {}
         return True
+
+    # drops the current db if it has an older version number
+    @staticmethod
+    def configure():
+        new_transaction = transaction.TransactionManager()
+        trans = LocalStorage.db.open(new_transaction)
+        root = trans.root()
+        if STORAGE_VERSION not in root or root[STORAGE_VERSION] < CURRENT_VERSION:
+            keys = list(root.keys()).copy()
+            for key in keys:
+                del root[key]
+            root[STORAGE_VERSION] = CURRENT_VERSION
+            new_transaction.commit()
 
     # returns the database object exclusive for the thread
 
