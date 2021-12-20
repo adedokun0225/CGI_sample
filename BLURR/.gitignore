@@ -6,3 +6,4 @@ Blurr.zip
 **/__pycache__/
 .vscode/
 TestNotebooks/
+*.spec

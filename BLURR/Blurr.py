@@ -59,6 +59,9 @@ class Blurr():
             Settings.TRACKING_ON)
         self.blocked = False
 
+        self.loggerLock = threading.Lock()
+        self.loggerLock.acquire()
+
         self.startLoggingThread()
 
         # run the main thread of the app
@@ -73,7 +76,8 @@ class Blurr():
 
     # deamon thread running in the background and logging the current state to the file every 30 seconds
     def loggingThread(self):
-        while not self.wasAppClosed():
+        wasUnlocked = False
+        while not self.wasAppClosed() and not wasUnlocked:
             res = None
             if self.isRunning:
                 res = Logger.info(Log.LOG_BLURR_ACTIVE)
@@ -84,10 +88,9 @@ class Blurr():
             if res:
                 Logger.persistRemainingLogs()
 
-            time.sleep(60)
+            wasUnlocked = self.loggerLock.acquire(timeout=60)
         # end app
-        print("Exiting logging thread")
-        sys.exit()
+        self.loggerLock.release()
 
     # infinite loop switching between the system tray icon and the blocking window
     def mainThread(self):
@@ -183,4 +186,5 @@ class Blurr():
         return User.authorize()
 
     def quitBlurr(self):
+        self.loggerLock.release()
         self.systemTray.quitApp()
