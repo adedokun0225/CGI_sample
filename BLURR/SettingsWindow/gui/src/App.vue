@@ -4,7 +4,7 @@
       <LogIn :onLogin="signIn" />
     </b-overlay>
     <b-overlay v-else-if="firstStart" :show="!loaded">
-      <Configure :configure="setUp" />
+      <Configure :configure="configure" />
     </b-overlay>
     <div v-else id="settings-app">
       <LeftBar
@@ -47,39 +47,8 @@
       selectOption(option) {
         this.selectedOption = option;
       },
-      methods: {
-        selectOption(option) {
-          this.selectedOption = option;
-        },
-        async setUp() {
-          this.firstStart = false;
-          this.firstStart = !(await this.wasSetUp());
-        },
-        signIn() {
-          this.loggedIn = true;
-        },
-        loggedOut() {
-          this.loggedIn = false;
-        },
-      },
-      async created() {
-        this.firstStart = !(await this.wasSetUp());
-        this.loggedIn = await this.isLoggedIn();
-        if (!this.loggedIn) {
-          let wasAuthorized = await this.wasAuthorized();
-          if (wasAuthorized) {
-            this.$bvToast.toast(
-              "It seems that your account no longer has a valid license. Please contact your manager.",
-              {
-                title: "Account expired",
-                variant: "warning",
-                toaster: "b-toaster-top-center",
-                appendToast: true,
-              }
-            );
-          }
-        }
-        this.loaded = true;
+      configure() {
+        this.firstStart = false;
       },
       signIn() {
         this.loggedIn = true;
@@ -91,6 +60,20 @@
     async created() {
       this.firstStart = !(await this.wasSetUp());
       this.loggedIn = await this.isLoggedIn();
+      if (!this.loggedIn) {
+        let wasAuthorized = await this.wasAuthorized();
+        if (wasAuthorized) {
+          this.$bvToast.toast(
+            "It seems that your account no longer has a valid license. Please contact your manager.",
+            {
+              title: "Account expired",
+              variant: "warning",
+              toaster: "b-toaster-top-center",
+              appendToast: true,
+            }
+          );
+        }
+      }
       this.loaded = true;
     },
   };
