@@ -41,6 +41,7 @@ public class AdminController {
         //TODO: send email to the user
         user.setPassword(encoder.encode(pwd));
         user.setEnabled(true);
+        user.setBlurrEnabled(true);
         userService.saveUser(user);
         return ResponseEntity.ok(new AuthorizeResponse(true, pwd));
     }
