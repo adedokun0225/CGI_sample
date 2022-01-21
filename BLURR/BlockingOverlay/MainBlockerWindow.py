@@ -44,11 +44,19 @@ class MainBlockerWindow():
         self.root.bind("<FocusOut>", self.getFocus)
         # render GUI
         self.render()
+        self.startWindow()
+
+    def startWindow(self):
         # get focus to stay on top
         self.root.after(10, self.getFocus, 0)
         self.root.after(10, self.scanForMonitors)
         self.root.after(10, self.updateGui)
-        self.root.mainloop()
+        # to make sure window stays open even if some tkinter internal error occurs
+        try:
+            self.root.mainloop()
+        except Exception as exc:
+            print("Error tkinter")
+            self.startWindow()
 
     # render the overlay components
     def render(self):
