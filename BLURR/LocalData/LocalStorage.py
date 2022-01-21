@@ -19,7 +19,7 @@ CURRENT_VERSION = 1
 class LocalStorage():
     # initializes the local db at start
     @staticmethod
-    def initialize():
+    def initialize(factory=False):
 
         if hasattr(LocalStorage, "initialized"):
             return False
@@ -31,7 +31,7 @@ class LocalStorage():
                 dir_path + "/" + STORAGE_FILE)
             LocalStorage.db = ZODB.DB(LocalStorage.storage)
             LocalStorage.connection = LocalStorage.db.open()
-            LocalStorage.configure()
+            LocalStorage.configure(factory=factory)
         except Exception as err:
             return False
 
@@ -40,11 +40,11 @@ class LocalStorage():
 
     # drops the current db if it has an older version number
     @staticmethod
-    def configure():
+    def configure(factory=False):
         new_transaction = transaction.TransactionManager()
         trans = LocalStorage.db.open(new_transaction)
         root = trans.root()
-        if STORAGE_VERSION not in root or root[STORAGE_VERSION] < CURRENT_VERSION:
+        if factory or STORAGE_VERSION not in root or root[STORAGE_VERSION] < CURRENT_VERSION:
             keys = list(root.keys()).copy()
             for key in keys:
                 del root[key]

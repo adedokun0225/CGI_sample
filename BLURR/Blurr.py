@@ -17,9 +17,9 @@ import time
 
 class Blurr():
 
-    def __init__(self) -> None:
+    def __init__(self, factorySettings=False) -> None:
         # if couldn't initialize the database -> another instance of Blurr is running
-        self.initialized = LocalStorage.initialize()
+        self.initialized = LocalStorage.initialize(factory=factorySettings)
         if not self.initialized:
             return
 
