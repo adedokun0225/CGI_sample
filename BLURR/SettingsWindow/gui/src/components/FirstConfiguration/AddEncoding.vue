@@ -1,7 +1,9 @@
 <template>
-  <div>
-    <h2>Please add an encoding of your face so that Blurr can recognize you</h2>
-    <div v-if="selectName">
+  <div id="encodingScreen">
+    <h2 id="info-h">
+      Please add an encoding of your face so that Blurr can recognize you
+    </h2>
+    <div v-if="selectName" id="name-select">
       <b-form-label for="name-input"> Member name: </b-form-label>
       <b-form-input
         id="name-input"
@@ -15,17 +17,35 @@
 
     <div v-show="!selectName" id="cameraDiv">
       <h2 v-if="addingError">{{ addingErrorMsg }}</h2>
-      <img ref="img" v-bind:src="'data:image/png;base64,' + frameSrc" />
+      <div id="imageDiv">
+        <img
+          ref="img"
+          id="cameraImage"
+          v-bind:src="'data:image/png;base64,' + frameSrc"
+        />
+      </div>
     </div>
 
     <div id="bt-div">
-      <b-button @click="goBack()"> Back </b-button>
+      <b-button
+        class="bottom-bt"
+        id="back-bt"
+        @click="goBack()"
+        variant="outline-secondary"
+      >
+        Back
+      </b-button>
 
-      <b-overlay id="bt-overlay" :show="isLoading" rounded="sm">
-        <b-button @click="proceedToFace()" variant="primary" v-if="selectName">
+      <b-overlay
+        class="bottom-bt"
+        id="bt-overlay"
+        :show="isLoading"
+        rounded="sm"
+      >
+        <b-button class="overlay-bt" @click="proceedToFace()" v-if="selectName">
           Select name
         </b-button>
-        <b-button variant="primary" v-else @click="addEncoding()">
+        <b-button class="overlay-bt" v-else @click="addEncoding()">
           Add encoding
         </b-button>
       </b-overlay>
@@ -99,4 +119,58 @@
   };
 </script>
 
-<style></style>
+<style>
+  .overlay-bt {
+    width: 100%;
+  }
+
+  #encodingScreen {
+    max-width: 100vw;
+    max-height: 100vh;
+    min-width: 100vw;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+  }
+
+  #cameraDiv {
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+  }
+
+  #imageDiv {
+    display: flex;
+    flex-direction: row;
+    padding: 20px;
+    align-self: center;
+  }
+
+  #cameraImage {
+    height: 80vmin;
+    width: 80vmin;
+    object-fit: contain;
+    align-self: center;
+  }
+
+  #bt-div {
+    margin-top: auto;
+    display: flex;
+    flex-direction: row;
+  }
+
+  .bottom-bt {
+    min-width: 20%;
+  }
+
+  #back-bt {
+    margin-left: auto;
+    margin-right: 5px;
+  }
+
+  #name-select {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+</style>
