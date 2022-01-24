@@ -55,7 +55,6 @@ class MainBlockerWindow():
         try:
             self.root.mainloop()
         except Exception as exc:
-            print("Error tkinter")
             self.startWindow()
 
     # render the overlay components
@@ -144,6 +143,10 @@ class MainBlockerWindow():
 
     # updates the input pin code on new keyboard input
     def pinInput(self, key: str):
+
+        if key == None:
+            return
+
         if "back" in key:
             if len(self.typedPwd) > 0:
                 self.typedPwd = self.typedPwd[0:len(self.typedPwd)-1]
