@@ -48,7 +48,11 @@ class MainBlockerWindow():
         self.root.after(10, self.getFocus, 0)
         self.root.after(10, self.scanForMonitors)
         self.root.after(10, self.updateGui)
-        self.root.mainloop()
+        # to make sure window stays open even if some tkinter internal error occurs
+        try:
+            self.root.mainloop()
+        except Exception as exc:
+            self.startWindow()
 
     # render the overlay components
     def render(self):
@@ -136,6 +140,10 @@ class MainBlockerWindow():
 
     # updates the input pin code on new keyboard input
     def pinInput(self, key: str):
+
+        if key == None:
+            return
+
         if "back" in key:
             if len(self.typedPwd) > 0:
                 self.typedPwd = self.typedPwd[0:len(self.typedPwd)-1]
