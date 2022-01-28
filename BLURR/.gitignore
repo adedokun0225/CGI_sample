@@ -1,9 +1,0 @@
-dist/
-distMultipleFiles/
-build/
-models/
-Blurr.zip
-**/__pycache__/
-.vscode/
-TestNotebooks/
-*.spec
