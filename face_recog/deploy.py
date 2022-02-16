@@ -1,8 +1,8 @@
 import tensorflow.keras
-import cv2
+import cv2 
 import numpy as np
 import time
-
+#face recog deploy
 #display scientific notation for clarity
 np.set_printoptios(suppress=True)
 
