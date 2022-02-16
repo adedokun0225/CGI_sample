@@ -1,0 +1,3 @@
+0  animal 
+1  real 
+2  spoof
