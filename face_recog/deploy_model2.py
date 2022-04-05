@@ -3,7 +3,7 @@ from tensorflow.keras.models import load_model
 import cv2 
 import numpy as np
 import time
-import face_recognition
+#import face_recognition
 
 #display scientific notation for clarity
 np.set_printoptions(suppress=True)
